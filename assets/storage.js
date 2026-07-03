@@ -12,19 +12,14 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc12";
-import {
-  applyQuotePrintPricing,
-  calculateGarmentSellPrice,
-  resolveQuantityBracket,
-} from "./calculations.js?v=rc12";
+} from "./config.js?v=rc14";
+import { calculateGarmentSellPrice } from "./calculations.js?v=rc14";
 import {
   deepClone,
-  formatDimensions,
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc12";
+} from "./utils.js?v=rc14";
 
 export function loadStored(key, fallback) {
   try {
@@ -225,25 +220,144 @@ export function hydrateGarments(storedGarments, settings, categories) {
     .filter((garment) => garment.name);
 }
 
+function createGarmentMatchKey(garment) {
+  return [garment?.brand, garment?.code, garment?.name]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .join("::");
+}
+
+function createLibraryGarmentRecord(garment, categories, settings, existingId = garment?.id) {
+  const costPrice = sanitiseNumber(garment?.costPrice, 0);
+
+  return {
+    id: existingId || generateId(),
+    categoryId: resolveCategoryId(garment?.categoryId || garment?.category, categories),
+    name: String(garment?.name || "").trim(),
+    brand: String(garment?.brand || "").trim(),
+    code: String(garment?.code || "").trim(),
+    notes: String(garment?.notes || "").trim(),
+    costPrice,
+    sellPrice: calculateGarmentSellPrice(costPrice, settings),
+    updatedAt: garment?.updatedAt || new Date().toISOString(),
+  };
+}
+
+export function mergeQuoteGarmentsIntoLibrary(
+  garments,
+  storedQuotes,
+  legacyQuoteItems,
+  categories,
+  settings,
+) {
+  const nextGarments = [...garments];
+  const seenIds = new Set(nextGarments.map((garment) => garment.id));
+  const seenKeys = new Set(
+    nextGarments.map((garment) => createGarmentMatchKey(garment)).filter((key) => key !== "::"),
+  );
+  const quoteItems = [
+    ...(Array.isArray(legacyQuoteItems) ? legacyQuoteItems : []),
+    ...(Array.isArray(storedQuotes)
+      ? storedQuotes.flatMap((quote) => (Array.isArray(quote?.quoteItems) ? quote.quoteItems : []))
+      : []),
+  ];
+
+  quoteItems.forEach((item) => {
+    if (!item?.garment || typeof item.garment !== "object") {
+      return;
+    }
+
+    const matchKey = createGarmentMatchKey(item.garment);
+    const requestedId = String(item.garment.id || "").trim();
+    if ((matchKey && seenKeys.has(matchKey)) || (requestedId && seenIds.has(requestedId))) {
+      return;
+    }
+
+    const nextGarment = createLibraryGarmentRecord(
+      item.garment,
+      categories,
+      settings,
+      requestedId || undefined,
+    );
+    if (!nextGarment.name) {
+      return;
+    }
+
+    nextGarments.unshift(nextGarment);
+    seenIds.add(nextGarment.id);
+    seenKeys.add(createGarmentMatchKey(nextGarment));
+  });
+
+  return nextGarments;
+}
+
+function resolveStoredQuoteGarmentId(item, garments) {
+  const requestedId = String(item?.garmentId || item?.garment?.id || "").trim();
+  if (requestedId && garments.some((garment) => garment.id === requestedId)) {
+    return requestedId;
+  }
+
+  const matchKey = createGarmentMatchKey(item?.garment);
+  if (!matchKey) {
+    return requestedId;
+  }
+
+  return garments.find((garment) => createGarmentMatchKey(garment) === matchKey)?.id || requestedId;
+}
+
+function resolveStoredPositionId(printLine, positions) {
+  const requestedId = String(printLine?.positionId || "").trim();
+  if (requestedId && positions.some((position) => position.id === requestedId)) {
+    return requestedId;
+  }
+
+  const label = String(printLine?.positionLabel || "").trim().toLowerCase();
+  return positions.find((position) => position.label.trim().toLowerCase() === label)?.id || "";
+}
+
+function resolveStoredSizeId(printLine, sizes) {
+  const requestedId = String(printLine?.sizeId || "").trim();
+  if (requestedId && sizes.some((size) => size.id === requestedId)) {
+    return requestedId;
+  }
+
+  const label = String(printLine?.sizeLabel || "").trim().toLowerCase();
+  const labelMatch = sizes.find((size) => size.label.trim().toLowerCase() === label)?.id;
+  if (labelMatch) {
+    return labelMatch;
+  }
+
+  const widthMm = sanitiseNumber(printLine?.widthMm, Number.NaN);
+  const heightMm = sanitiseNumber(printLine?.heightMm, Number.NaN);
+  if (Number.isFinite(widthMm) && Number.isFinite(heightMm)) {
+    return (
+      sizes.find((size) => size.widthMm === widthMm && size.heightMm === heightMm)?.id || ""
+    );
+  }
+
+  return "";
+}
+
 function hydrateQuoteItemPrints(storedPrints, positions, sizes) {
   if (!Array.isArray(storedPrints)) {
     return [];
   }
 
-  return storedPrints.map((printLine) => {
-    const size = sizes.find((item) => item.id === printLine.sizeId);
-    const position = positions.find((item) => item.id === printLine.positionId);
+  return storedPrints
+    .map((printLine) => {
+      const positionId = resolveStoredPositionId(printLine, positions);
+      const sizeId = resolveStoredSizeId(printLine, sizes);
 
-    return {
-      id: printLine.id || generateId(),
-      positionId: String(printLine.positionId || position?.id || ""),
-      sizeId: String(printLine.sizeId || size?.id || ""),
-      positionLabel: position?.label || String(printLine.positionLabel || "Custom"),
-      sizeLabel: size?.label || String(printLine.sizeLabel || "Custom"),
-      sizeDimensions: size ? formatDimensions(size) : String(printLine.sizeDimensions || ""),
-      price: sanitiseNumber(printLine.price, 0),
-    };
-  });
+      if (!positionId || !sizeId) {
+        return null;
+      }
+
+      return {
+        id: printLine.id || generateId(),
+        positionId,
+        sizeId,
+      };
+    })
+    .filter(Boolean);
 }
 
 function hydrateDraftPrints(storedPrints, positions, sizes) {
@@ -270,7 +384,7 @@ function hydrateDraftPrints(storedPrints, positions, sizes) {
     .filter(Boolean);
 }
 
-export function hydrateQuoteItems(storedQuoteItems, positions, sizes, categories, settings) {
+export function hydrateQuoteItems(storedQuoteItems, positions, sizes, garments) {
   if (!Array.isArray(storedQuoteItems)) {
     return [];
   }
@@ -281,11 +395,6 @@ export function hydrateQuoteItems(storedQuoteItems, positions, sizes, categories
       item?.quantityMode === "custom" || !QUANTITY_OPTIONS.includes(quantity)
         ? "custom"
         : "preset";
-    const costPrice = sanitiseNumber(item?.garment?.costPrice, 0);
-    const sellPrice = sanitiseNumber(
-      item?.garment?.sellPrice,
-      calculateGarmentSellPrice(costPrice, settings),
-    );
 
     return {
       id: item?.id || generateId(),
@@ -293,27 +402,14 @@ export function hydrateQuoteItems(storedQuoteItems, positions, sizes, categories
       quantity,
       customQuantity:
         quantityMode === "custom" ? String(item?.customQuantity || quantity) : "",
-      quantityBracket: resolveQuantityBracket(quantity),
-      garment: {
-        id: String(item?.garment?.id || ""),
-        categoryId: resolveCategoryId(
-          item?.garment?.categoryId || item?.garment?.category,
-          categories,
-        ),
-        name: String(item?.garment?.name || "").trim(),
-        brand: String(item?.garment?.brand || "").trim(),
-        code: String(item?.garment?.code || "").trim(),
-        notes: String(item?.garment?.notes || "").trim(),
-        costPrice,
-        sellPrice,
-      },
+      garmentId: resolveStoredQuoteGarmentId(item, garments),
       prints: hydrateQuoteItemPrints(item?.prints, positions, sizes),
       createdAt: item?.createdAt || new Date().toISOString(),
     };
   });
 }
 
-export function hydrateQuoteDraft(storedDraft, positions, sizes, categories) {
+export function hydrateQuoteDraft(storedDraft, positions, sizes, categories, garments) {
   const fallbackDraft = createEmptyQuoteDraft(
     positions[0]?.id,
     sizes[0]?.id,
@@ -332,6 +428,10 @@ export function hydrateQuoteDraft(storedDraft, positions, sizes, categories) {
     storedDraft.quantityMode === "custom" || !QUANTITY_OPTIONS.includes(quantity)
       ? "custom"
       : "preset";
+  const linkedGarment = garments.find(
+    (garment) => garment.id === String(storedDraft.garment?.sourceId || "").trim(),
+  );
+  const garmentSource = linkedGarment || storedDraft.garment || {};
 
   return {
     quantityMode,
@@ -340,16 +440,18 @@ export function hydrateQuoteDraft(storedDraft, positions, sizes, categories) {
       quantityMode === "custom" ? String(storedDraft.customQuantity || quantity) : "",
     editingItemId: String(storedDraft.editingItemId || ""),
     garment: {
-      sourceId: String(storedDraft.garment?.sourceId || ""),
+      sourceId: linkedGarment ? linkedGarment.id : "",
       categoryId: resolveCategoryId(
-        storedDraft.garment?.categoryId || storedDraft.garment?.category,
+        garmentSource.categoryId || garmentSource.category,
         categories,
       ),
-      name: String(storedDraft.garment?.name || ""),
-      brand: String(storedDraft.garment?.brand || ""),
-      code: String(storedDraft.garment?.code || ""),
-      costPrice: storedDraft.garment?.costPrice ?? "",
-      notes: String(storedDraft.garment?.notes || ""),
+      name: String(garmentSource.name || ""),
+      brand: String(garmentSource.brand || ""),
+      code: String(garmentSource.code || ""),
+      costPrice: linkedGarment
+        ? linkedGarment.costPrice.toFixed(2)
+        : storedDraft.garment?.costPrice ?? "",
+      notes: String(garmentSource.notes || ""),
     },
     printDraft: {
       positionId:
@@ -378,36 +480,31 @@ export function hydrateQuoteDelivery(storedDelivery, settings) {
   };
 }
 
-function hydrateQuoteRecord(storedQuote, positions, sizes, categories, settings, pricing) {
-  const quoteItems = applyQuotePrintPricing(
-    hydrateQuoteItems(
-      storedQuote?.quoteItems,
-      positions,
-      sizes,
-      categories,
-      settings,
-    ),
-    pricing,
-  );
-
+function hydrateQuoteRecord(storedQuote, positions, sizes, categories, settings, garments) {
   return {
     id: storedQuote?.id || generateId(),
     name: String(storedQuote?.name || "").trim(),
-    quoteItems,
-    quoteDraft: hydrateQuoteDraft(storedQuote?.quoteDraft, positions, sizes, categories),
+    quoteItems: hydrateQuoteItems(storedQuote?.quoteItems, positions, sizes, garments),
+    quoteDraft: hydrateQuoteDraft(
+      storedQuote?.quoteDraft,
+      positions,
+      sizes,
+      categories,
+      garments,
+    ),
     delivery: hydrateQuoteDelivery(storedQuote?.delivery, settings),
     createdAt: storedQuote?.createdAt || new Date().toISOString(),
     updatedAt: storedQuote?.updatedAt || new Date().toISOString(),
   };
 }
 
-function hydrateQuotes(storedQuotes, positions, sizes, categories, settings, pricing) {
+function hydrateQuotes(storedQuotes, positions, sizes, categories, settings, garments) {
   if (!Array.isArray(storedQuotes)) {
     return [];
   }
 
   return storedQuotes
-    .map((quote) => hydrateQuoteRecord(quote, positions, sizes, categories, settings, pricing))
+    .map((quote) => hydrateQuoteRecord(quote, positions, sizes, categories, settings, garments))
     .sort((left, right) => new Date(right.updatedAt) - new Date(left.updatedAt));
 }
 
@@ -450,23 +547,30 @@ export function loadAppState() {
     loadStored(STORAGE_KEYS.garmentCategories, DEFAULT_GARMENT_CATEGORIES),
   );
   const pricing = hydratePricing(loadStored(STORAGE_KEYS.pricing, {}), positions, sizes);
-  const garments = hydrateGarments(
-    loadStored(STORAGE_KEYS.garments, []),
-    settings,
+  const storedQuotes = loadStored(STORAGE_KEYS.quotes, []);
+  const legacyQuoteItems = loadStored(STORAGE_KEYS.legacyQuoteItems, []);
+  const garments = mergeQuoteGarmentsIntoLibrary(
+    hydrateGarments(
+      loadStored(STORAGE_KEYS.garments, []),
+      settings,
+      garmentCategories,
+    ),
+    storedQuotes,
+    legacyQuoteItems,
     garmentCategories,
+    settings,
   );
 
   let quotes = hydrateQuotes(
-    loadStored(STORAGE_KEYS.quotes, []),
+    storedQuotes,
     positions,
     sizes,
     garmentCategories,
     settings,
-    pricing,
+    garments,
   );
 
   if (!quotes.length) {
-    const legacyQuoteItems = loadStored(STORAGE_KEYS.legacyQuoteItems, []);
     const legacyQuoteDraft = loadStored(STORAGE_KEYS.legacyQuoteDraft, null);
     const hasLegacyQuote =
       (Array.isArray(legacyQuoteItems) && legacyQuoteItems.length > 0) ||
@@ -484,7 +588,7 @@ export function loadAppState() {
           sizes,
           garmentCategories,
           settings,
-          pricing,
+          garments,
         ),
       ];
     }
@@ -492,10 +596,10 @@ export function loadAppState() {
 
   if (!quotes.length) {
     quotes = [
-        hydrateQuoteRecord(
-          {
-            name: "",
-            quoteItems: [],
+      hydrateQuoteRecord(
+        {
+          name: "",
+          quoteItems: [],
           quoteDraft: createEmptyQuoteDraft(
             positions[0]?.id,
             sizes[0]?.id,
@@ -503,12 +607,12 @@ export function loadAppState() {
           ),
         },
         positions,
-          sizes,
-          garmentCategories,
-          settings,
-          pricing,
-        ),
-      ];
+        sizes,
+        garmentCategories,
+        settings,
+        garments,
+      ),
+    ];
   }
 
   const uiState = hydrateUiState(

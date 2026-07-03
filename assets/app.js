@@ -6,11 +6,12 @@ import {
   calculateGarmentSellPrice,
   calculateQuoteItem,
   calculateQuoteTotals,
+  createQuoteItemRecord,
   createQuoteItemSnapshot,
   lookupPrintPrice,
   resolveDeliveryBoxes,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc12";
+} from "./calculations.js?v=rc14";
 import {
   createDefaultQuoteDelivery,
   createEmptyQuoteDraft,
@@ -18,7 +19,7 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc12";
+} from "./config.js?v=rc14";
 import {
   hydrateGarments,
   hydratePricing,
@@ -27,7 +28,7 @@ import {
   hydrateQuoteItems,
   loadAppState,
   persist,
-} from "./storage.js?v=rc12";
+} from "./storage.js?v=rc14";
 import {
   deepClone,
   escapeHtml,
@@ -38,7 +39,7 @@ import {
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc12";
+} from "./utils.js?v=rc14";
 
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
@@ -252,9 +253,7 @@ const elements = {
 initialize();
 
 function initialize() {
-  ensureDraftSelections();
-  repriceDraftPrintsForQuantity();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   renderCategoryOptions();
   syncQuoteMetaInputs();
   syncGarmentDraftInputs();
@@ -817,7 +816,7 @@ function renderSavedQuotes() {
   elements.savedQuotesList.innerHTML = state.quotes
     .map((quote) => {
       const totals = calculateQuoteTotals(
-        applyQuotePrintPricing(quote.quoteItems, state.pricing),
+        applyQuotePrintPricing(quote.quoteItems.map((item) => resolveQuoteItemForDisplay(item)), state.pricing),
         quote.delivery,
       );
       const isActive = quote.id === state.activeQuoteId;
@@ -944,6 +943,7 @@ function renderGarmentSheetMeta() {
 function renderPrintSheet() {
   const selectedPositionId = state.quoteDraft.printDraft.positionId;
   const selectedSizeId = state.quoteDraft.printDraft.sizeId;
+  const availableSizes = getPricingSizesForPosition(selectedPositionId);
 
   elements.printPositionOptions.innerHTML = state.positions
     .map(
@@ -959,7 +959,7 @@ function renderPrintSheet() {
     )
     .join("");
 
-  elements.printSizeOptions.innerHTML = state.sizes
+  elements.printSizeOptions.innerHTML = availableSizes
     .map(
       (size) => `
         <button
@@ -1578,9 +1578,7 @@ function handleCurrentGarmentCardClick(event) {
 }
 
 function handleQuoteGarmentInput(event) {
-  if (event.target.id !== "quoteGarmentNotes") {
-    state.quoteDraft.garment.sourceId = "";
-  }
+  state.quoteDraft.garment.sourceId = "";
 
   state.quoteDraft.garment.name = elements.quoteGarmentName.value;
   state.quoteDraft.garment.categoryId = resolveCategoryId(elements.quoteGarmentCategory.value);
@@ -1697,6 +1695,13 @@ function handlePrintPositionClick(event) {
   }
 
   state.quoteDraft.printDraft.positionId = button.dataset.printPosition;
+  if (!isValidPrintReference(
+    state.quoteDraft.printDraft.positionId,
+    state.quoteDraft.printDraft.sizeId,
+  )) {
+    state.quoteDraft.printDraft.sizeId =
+      getPricingSizesForPosition(state.quoteDraft.printDraft.positionId)[0]?.id || "";
+  }
   refreshDraftPriceFromPricing(true);
   renderPrintSheet();
   persistActiveQuote();
@@ -1892,9 +1897,7 @@ function handlePricingInput(event) {
 
   state.pricing[positionId][sizeId][quantity] = sanitiseNumber(input.value, 0);
   persist(STORAGE_KEYS.pricing, state.pricing);
-  state.quoteItems = applyQuotePrintPricing(state.quoteItems, state.pricing);
-  repriceDraftPrintsForQuantity();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   renderDraftPrints();
   renderDraftPreview();
   renderPrintSheetMeta();
@@ -1997,16 +2000,12 @@ function saveQuoteItemFromDraft() {
     return;
   }
 
+  const garment = ensureDraftGarmentRecord();
   const editingId = state.quoteDraft.editingItemId;
   const existingItem = state.quoteItems.find((item) => item.id === editingId);
-  const snapshot = createQuoteItemSnapshot(
+  const snapshot = createQuoteItemRecord(
     buildDraftSnapshotSource(editingId || generateId(), existingItem?.createdAt),
-    {
-      positions: state.positions,
-      sizes: state.sizes,
-      quoteQuantity: getProjectedQuoteQuantityForPersist(),
-    },
-    state.settings,
+    garment.id,
   );
 
   let nextQuoteItems;
@@ -2016,7 +2015,7 @@ function saveQuoteItemFromDraft() {
     nextQuoteItems = [...state.quoteItems, snapshot];
   }
 
-  state.quoteItems = applyQuotePrintPricing(nextQuoteItems, state.pricing);
+  state.quoteItems = nextQuoteItems.map((item) => normaliseQuoteItemRecord(item));
 
   persistActiveQuote();
   renderQuoteSummary();
@@ -2049,6 +2048,7 @@ function editQuoteItem(itemId) {
   if (!item) {
     return;
   }
+  const garment = getGarmentById(item.garmentId);
 
   state.quoteDraft = hydrateQuoteDraft(
     {
@@ -2057,13 +2057,13 @@ function editQuoteItem(itemId) {
       customQuantity: item.customQuantity,
       editingItemId: item.id,
       garment: {
-        sourceId: item.garment.id || "",
-        categoryId: item.garment.categoryId,
-        name: item.garment.name,
-        brand: item.garment.brand,
-        code: item.garment.code,
-        costPrice: item.garment.costPrice,
-        notes: item.garment.notes,
+        sourceId: garment?.id || "",
+        categoryId: garment?.categoryId || getDefaultCategoryId(),
+        name: garment?.name || "",
+        brand: garment?.brand || "",
+        code: garment?.code || "",
+        costPrice: garment ? garment.costPrice.toFixed(2) : "",
+        notes: garment?.notes || "",
       },
       printDraft: {
         positionId: item.prints[0]?.positionId || state.positions[0]?.id || "",
@@ -2080,11 +2080,11 @@ function editQuoteItem(itemId) {
     state.positions,
     state.sizes,
     state.garmentCategories,
+    state.garments,
   );
 
   syncGarmentDraftInputs();
-  repriceDraftPrintsForQuantity();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   persistActiveQuote();
   renderQuoteComposer();
   renderQuoteSummary();
@@ -2107,7 +2107,6 @@ function duplicateQuoteItem(itemId) {
   };
 
   state.quoteItems.splice(itemIndex + 1, 0, duplicatedItem);
-  state.quoteItems = applyQuotePrintPricing(state.quoteItems, state.pricing);
   repriceDraftPrintsForQuantity();
   refreshDraftPriceFromPricing(true);
   persistActiveQuote();
@@ -2153,7 +2152,6 @@ function requestDeleteQuoteItem(itemId) {
 
 function deleteQuoteItem(itemId) {
   state.quoteItems = state.quoteItems.filter((item) => item.id !== itemId);
-  state.quoteItems = applyQuotePrintPricing(state.quoteItems, state.pricing);
 
   if (state.quoteDraft.editingItemId === itemId) {
     state.quoteDraft.editingItemId = "";
@@ -2257,9 +2255,17 @@ function saveGarmentFromEditor() {
   }
 
   upsertGarment(garment, state.garmentEditorId || undefined);
+  syncActiveQuoteWithLibraries();
+  persistActiveQuote();
   clearGarmentEditor();
+  renderCurrentGarmentCard();
+  renderGarmentSheetMeta();
+  renderDraftPreview();
+  renderQuoteSummary();
+  renderQuoteMeta();
   renderGarmentLibrary();
   renderGarmentSearchResults();
+  renderSavedQuotes();
 }
 
 function deleteGarmentFromEditor() {
@@ -2273,11 +2279,15 @@ function deleteGarmentFromEditor() {
 
   if (state.quoteDraft.garment.sourceId === deletedId) {
     state.quoteDraft.garment.sourceId = "";
-    persistActiveQuote();
   }
 
+  syncActiveQuoteWithLibraries();
+  persistActiveQuote();
   clearGarmentEditor();
   renderCurrentGarmentCard();
+  renderGarmentSheetMeta();
+  renderDraftPreview();
+  renderQuoteSummary();
   renderGarmentLibrary();
   renderGarmentSearchResults();
   renderQuoteMeta();
@@ -2368,18 +2378,14 @@ function deleteGarmentCategory(categoryId) {
     state.quoteDraft.garment.categoryId = replacementCategoryId;
   }
 
-  state.quoteItems = state.quoteItems.map((item) =>
-    item.garment.categoryId === categoryId
-      ? { ...item, garment: { ...item.garment, categoryId: replacementCategoryId } }
-      : item,
-  );
-
   persist(STORAGE_KEYS.garmentCategories, state.garmentCategories);
   persist(STORAGE_KEYS.garments, state.garments);
+  syncActiveQuoteWithLibraries();
   syncGarmentDraftInputs();
   syncGarmentEditor(state.garments.find((garment) => garment.id === state.garmentEditorId) || null);
   renderGarmentCategoryManager();
   renderCurrentGarmentCard();
+  renderDraftPreview();
   renderGarmentSearchResults();
   renderGarmentLibrary();
   persistActiveQuote();
@@ -2418,13 +2424,13 @@ function savePositionFromSheet() {
   persist(STORAGE_KEYS.pricing, state.pricing);
   persistPositionSizeBindings();
   ensurePricingManagerSelection();
-  ensureDraftSelections();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   persistActiveQuote();
   renderPositionManager();
   renderPrintSheet();
   renderDraftPrints();
   renderDraftPreview();
+  renderQuoteSummary();
   renderPricingManager();
   renderPositionSheetState();
   renderPositionSizesSheetState();
@@ -2479,13 +2485,13 @@ function saveSizeFromSheet() {
   persist(STORAGE_KEYS.pricing, state.pricing);
   persistPositionSizeBindings();
   ensurePricingManagerSelection();
-  ensureDraftSelections();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   persistActiveQuote();
   renderSizeManager();
   renderPrintSheet();
   renderDraftPrints();
   renderDraftPreview();
+  renderQuoteSummary();
   renderPricingManager();
   renderSizeSheetState();
   renderPositionSizesSheetState();
@@ -2537,8 +2543,7 @@ function removePositionById(positionId) {
     state.pricingPositionId === positionId ? state.positions[0]?.id || "" : state.pricingPositionId;
   state.positionEditorId = "";
   ensurePricingManagerSelection();
-  ensureDraftSelections();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   persist(STORAGE_KEYS.positions, state.positions);
   persist(STORAGE_KEYS.pricing, state.pricing);
   persistPositionSizeBindings();
@@ -2547,6 +2552,7 @@ function removePositionById(positionId) {
   renderPrintSheet();
   renderDraftPrints();
   renderDraftPreview();
+  renderQuoteSummary();
   renderPricingManager();
   renderPositionSheetState();
   renderPositionSizesSheetState();
@@ -2588,8 +2594,7 @@ function removeSizeById(sizeId) {
     state.pricingCardSizeId === sizeId ? state.sizes[0]?.id || "" : state.pricingCardSizeId;
   state.sizeEditorId = "";
   ensurePricingManagerSelection();
-  ensureDraftSelections();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   persist(STORAGE_KEYS.sizes, state.sizes);
   persist(STORAGE_KEYS.pricing, state.pricing);
   persistPositionSizeBindings();
@@ -2598,6 +2603,7 @@ function removeSizeById(sizeId) {
   renderPrintSheet();
   renderDraftPrints();
   renderDraftPreview();
+  renderQuoteSummary();
   renderPricingManager();
   renderSizeSheetState();
   renderPositionSizesSheetState();
@@ -2630,6 +2636,8 @@ function saveSettings() {
   state.garments = hydrateGarments(state.garments, state.settings, state.garmentCategories);
   persist(STORAGE_KEYS.settings, state.settings);
   persist(STORAGE_KEYS.garments, state.garments);
+  syncActiveQuoteWithLibraries();
+  persistActiveQuote();
   syncSettingsForm();
   renderCurrentGarmentCard();
   renderGarmentSheetMeta();
@@ -2664,12 +2672,17 @@ function loadDemoGarments() {
 
   state.garments = nextGarments;
   persist(STORAGE_KEYS.garments, state.garments);
+  syncActiveQuoteWithLibraries();
+  persistActiveQuote();
   state.garmentEditorOpen = false;
   syncGarmentEditor(state.garments.find((garment) => garment.id === state.garmentEditorId) || null);
   renderGarmentEditorState();
   renderGarmentLibrary();
   renderGarmentSearchResults();
   renderCurrentGarmentCard();
+  renderGarmentSheetMeta();
+  renderDraftPreview();
+  renderQuoteSummary();
   renderQuoteMeta();
   renderSavedQuotes();
   window.alert(`Loaded ${addedCount} demo garment${addedCount === 1 ? "" : "s"}.`);
@@ -2739,6 +2752,35 @@ function buildGarmentPayloadFromQuote() {
     notes: state.quoteDraft.garment.notes,
     costPrice: sanitiseNumber(state.quoteDraft.garment.costPrice, 0),
   };
+}
+
+function ensureDraftGarmentRecord() {
+  const linkedGarment = getGarmentById(state.quoteDraft.garment.sourceId);
+  if (linkedGarment) {
+    return linkedGarment;
+  }
+
+  const garmentPayload = buildGarmentPayloadFromQuote();
+  const existingGarment = state.garments.find(
+    (garment) => createGarmentMatchKey(garment) === createGarmentMatchKey(garmentPayload),
+  );
+  const savedGarment = upsertGarment(garmentPayload, existingGarment?.id || undefined);
+
+  state.quoteDraft.garment = {
+    sourceId: savedGarment.id,
+    categoryId: resolveCategoryId(savedGarment.categoryId),
+    name: savedGarment.name,
+    brand: savedGarment.brand,
+    code: savedGarment.code,
+    costPrice: savedGarment.costPrice.toFixed(2),
+    notes: savedGarment.notes,
+  };
+
+  syncGarmentDraftInputs();
+  renderGarmentSearchResults();
+  renderGarmentLibrary();
+
+  return savedGarment;
 }
 
 function createEditorGarmentSnapshot() {
@@ -2830,6 +2872,10 @@ function hasDraftGarmentPricing() {
 }
 
 function getComputedPrintPrice(positionId, sizeId, quantity) {
+  if (!isValidPrintReference(positionId, sizeId)) {
+    return 0;
+  }
+
   return lookupPrintPrice(state.pricing, positionId, sizeId, quantity);
 }
 
@@ -2900,6 +2946,10 @@ function getGarmentSubtitle(garment) {
   return garment.notes || "";
 }
 
+function getGarmentById(garmentId) {
+  return state.garments.find((garment) => garment.id === garmentId);
+}
+
 function getPositionById(positionId) {
   return state.positions.find((position) => position.id === positionId);
 }
@@ -2917,6 +2967,98 @@ function getPositionSizeIds(positionId) {
 function getPricingSizesForPosition(positionId) {
   const attachedSizeIds = getPositionSizeIds(positionId);
   return state.sizes.filter((size) => attachedSizeIds.includes(size.id));
+}
+
+function isValidPrintReference(positionId, sizeId) {
+  return Boolean(
+    getPositionById(positionId) &&
+      getSizeById(sizeId) &&
+      getPositionSizeIds(positionId).includes(sizeId),
+  );
+}
+
+function normaliseQuoteItemRecord(item) {
+  const quantity = Math.max(1, Math.floor(sanitiseNumber(item?.quantity, 1)));
+  const quantityMode =
+    item?.quantityMode === "custom" || !QUANTITY_OPTIONS.includes(quantity)
+      ? "custom"
+      : "preset";
+
+  return {
+    id: item?.id || generateId(),
+    quantityMode,
+    quantity,
+    customQuantity: quantityMode === "custom" ? String(item?.customQuantity || quantity) : "",
+    garmentId: String(item?.garmentId || "").trim(),
+    prints: (item?.prints ?? [])
+      .map((printLine) => ({
+        id: printLine.id || generateId(),
+        positionId: String(printLine.positionId || "").trim(),
+        sizeId: String(printLine.sizeId || "").trim(),
+      }))
+      .filter((printLine) => isValidPrintReference(printLine.positionId, printLine.sizeId)),
+    createdAt: item?.createdAt || new Date().toISOString(),
+  };
+}
+
+function resolveQuoteItemGarment(item) {
+  return (
+    getGarmentById(item?.garmentId) || {
+      id: String(item?.garmentId || "").trim(),
+      categoryId: getDefaultCategoryId(),
+      name: "Missing garment",
+      brand: "",
+      code: "",
+      notes: "Garment removed from library",
+      costPrice: 0,
+      sellPrice: 0,
+    }
+  );
+}
+
+function resolveQuoteItemForDisplay(item) {
+  const normalisedItem = normaliseQuoteItemRecord(item);
+
+  return {
+    ...normalisedItem,
+    garment: resolveQuoteItemGarment(normalisedItem),
+    prints: normalisedItem.prints.map((printLine) => {
+      const position = getPositionById(printLine.positionId);
+      const size = getSizeById(printLine.sizeId);
+
+      return {
+        ...printLine,
+        positionLabel: position?.label || "Custom position",
+        sizeLabel: size?.label || "Custom size",
+        sizeDimensions: size ? formatDimensions(size) : "",
+      };
+    }),
+  };
+}
+
+function syncQuoteDraftGarmentFromLibrary() {
+  const sourceId = String(state.quoteDraft?.garment?.sourceId || "").trim();
+  if (!sourceId) {
+    state.quoteDraft.garment.categoryId = resolveCategoryId(state.quoteDraft.garment.categoryId);
+    return;
+  }
+
+  const garment = getGarmentById(sourceId);
+  if (!garment) {
+    state.quoteDraft.garment.sourceId = "";
+    state.quoteDraft.garment.categoryId = resolveCategoryId(state.quoteDraft.garment.categoryId);
+    return;
+  }
+
+  state.quoteDraft.garment = {
+    sourceId: garment.id,
+    categoryId: resolveCategoryId(garment.categoryId),
+    name: garment.name,
+    brand: garment.brand,
+    code: garment.code,
+    costPrice: garment.costPrice.toFixed(2),
+    notes: garment.notes,
+  };
 }
 
 function ensurePricingManagerSelection() {
@@ -2964,10 +3106,18 @@ function togglePositionSizeBinding(positionId, sizeId) {
 
   state.positionSizeBindings[positionId] = nextSizeIds;
   ensurePricingManagerSelection();
+  syncActiveQuoteWithLibraries();
   persistPositionSizeBindings();
   persistUiState();
   renderPricingManager();
   renderPositionSizesSheetState();
+  renderPrintSheet();
+  renderDraftPrints();
+  renderDraftPreview();
+  renderQuoteSummary();
+  renderQuoteMeta();
+  persistActiveQuote();
+  renderSavedQuotes();
 }
 
 function getCategoryById(categoryId) {
@@ -3004,6 +3154,30 @@ function isCustomQuantityActive() {
   );
 }
 
+function syncActiveQuoteWithLibraries() {
+  if (!state.quoteDraft?.printDraft) {
+    state.quoteDraft = createEmptyQuoteDraft(
+      state.positions[0]?.id,
+      state.sizes[0]?.id,
+      getDefaultCategoryId(),
+    );
+  }
+
+  syncQuoteDraftGarmentFromLibrary();
+  state.quoteItems = state.quoteItems.map((item) => normaliseQuoteItemRecord(item));
+  state.quoteDraft.prints = (state.quoteDraft.prints ?? [])
+    .map((printLine) => ({
+      id: printLine.id || generateId(),
+      positionId: String(printLine.positionId || "").trim(),
+      sizeId: String(printLine.sizeId || "").trim(),
+      price: sanitiseNumber(printLine.price, 0),
+    }))
+    .filter((printLine) => isValidPrintReference(printLine.positionId, printLine.sizeId));
+  ensureDraftSelections();
+  repriceDraftPrintsForQuantity();
+  refreshDraftPriceFromPricing(true);
+}
+
 function ensureDraftSelections() {
   if (!state.quoteDraft?.printDraft) {
     state.quoteDraft = createEmptyQuoteDraft(
@@ -3019,16 +3193,18 @@ function ensureDraftSelections() {
     state.quoteDraft.printDraft.positionId = state.positions[0]?.id || "";
   }
 
-  if (!state.sizes.some((size) => size.id === state.quoteDraft.printDraft.sizeId)) {
-    state.quoteDraft.printDraft.sizeId = state.sizes[0]?.id || "";
+  const availableSizeIds = getPositionSizeIds(state.quoteDraft.printDraft.positionId);
+  if (!availableSizeIds.includes(state.quoteDraft.printDraft.sizeId)) {
+    state.quoteDraft.printDraft.sizeId = availableSizeIds[0] || "";
   }
 
-  if (state.quoteDraft.printDraft.price === "") {
-    state.quoteDraft.printDraft.price = getComputedPrintPrice(
-      state.quoteDraft.printDraft.positionId,
-      state.quoteDraft.printDraft.sizeId,
-      getDraftPricingQuoteQuantity(),
-    ).toFixed(2);
+  const computedPrice = getComputedPrintPrice(
+    state.quoteDraft.printDraft.positionId,
+    state.quoteDraft.printDraft.sizeId,
+    getDraftPricingQuoteQuantity(),
+  );
+  if (state.quoteDraft.printDraft.price === "" || !state.quoteDraft.printDraft.sizeId) {
+    state.quoteDraft.printDraft.price = computedPrice.toFixed(2);
   }
 }
 
@@ -3058,8 +3234,7 @@ function loadQuoteIntoState(quote) {
     deepClone(quote.quoteItems),
     state.positions,
     state.sizes,
-    state.garmentCategories,
-    state.settings,
+    state.garments,
   );
   state.quoteDelivery = hydrateQuoteDelivery(deepClone(quote.delivery), state.settings);
   state.quoteDraft = hydrateQuoteDraft(
@@ -3067,15 +3242,38 @@ function loadQuoteIntoState(quote) {
     state.positions,
     state.sizes,
     state.garmentCategories,
+    state.garments,
   );
-  state.quoteItems = applyQuotePrintPricing(state.quoteItems, state.pricing);
   state.quoteCreatedAt = quote.createdAt || new Date().toISOString();
   state.quoteUpdatedAt = quote.updatedAt || state.quoteCreatedAt;
-  ensureDraftSelections();
-  repriceDraftPrintsForQuantity();
-  refreshDraftPriceFromPricing(true);
+  syncActiveQuoteWithLibraries();
   syncQuoteMetaInputs();
   syncGarmentDraftInputs();
+}
+
+function createPersistedQuoteDraft() {
+  const linkedGarment = getGarmentById(state.quoteDraft.garment.sourceId);
+
+  return {
+    ...deepClone(state.quoteDraft),
+    garment: linkedGarment
+      ? { sourceId: linkedGarment.id }
+      : {
+          sourceId: "",
+          categoryId: resolveCategoryId(state.quoteDraft.garment.categoryId),
+          name: state.quoteDraft.garment.name,
+          brand: state.quoteDraft.garment.brand,
+          code: state.quoteDraft.garment.code,
+          costPrice: state.quoteDraft.garment.costPrice,
+          notes: state.quoteDraft.garment.notes,
+        },
+    prints: (state.quoteDraft.prints ?? []).map((printLine) => ({
+      id: printLine.id,
+      positionId: printLine.positionId,
+      sizeId: printLine.sizeId,
+      price: sanitiseNumber(printLine.price, 0),
+    })),
+  };
 }
 
 function persistUiState() {
@@ -3091,13 +3289,14 @@ function persistUiState() {
 }
 
 function persistActiveQuote() {
+  syncActiveQuoteWithLibraries();
   const now = new Date().toISOString();
   const record = {
     id: state.activeQuoteId || generateId(),
     name: state.quoteName.trim(),
     quoteItems: deepClone(state.quoteItems),
     delivery: deepClone(state.quoteDelivery),
-    quoteDraft: deepClone(state.quoteDraft),
+    quoteDraft: createPersistedQuoteDraft(),
     createdAt: state.quoteCreatedAt || now,
     updatedAt: now,
   };
@@ -3146,12 +3345,18 @@ function getCurrentQuoteTotals() {
 
 function getQuoteItemsForDisplay() {
   if (!state.quoteDraft.editingItemId || !hasDraftGarmentPricing()) {
-    return applyQuotePrintPricing(state.quoteItems, state.pricing);
+    return applyQuotePrintPricing(
+      state.quoteItems.map((item) => resolveQuoteItemForDisplay(item)),
+      state.pricing,
+    );
   }
 
   const editingItem = state.quoteItems.find((item) => item.id === state.quoteDraft.editingItemId);
   if (!editingItem) {
-    return applyQuotePrintPricing(state.quoteItems, state.pricing);
+    return applyQuotePrintPricing(
+      state.quoteItems.map((item) => resolveQuoteItemForDisplay(item)),
+      state.pricing,
+    );
   }
 
   const draftSnapshot = createQuoteItemSnapshot(
@@ -3165,7 +3370,9 @@ function getQuoteItemsForDisplay() {
   );
 
   return applyQuotePrintPricing(
-    state.quoteItems.map((item) => (item.id === editingItem.id ? draftSnapshot : item)),
+    state.quoteItems.map((item) =>
+      item.id === editingItem.id ? draftSnapshot : resolveQuoteItemForDisplay(item),
+    ),
     state.pricing,
   );
 }

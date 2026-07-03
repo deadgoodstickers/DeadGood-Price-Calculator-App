@@ -1,5 +1,5 @@
-import { QUANTITY_OPTIONS } from "./config.js?v=rc12";
-import { formatDimensions, roundMoney, sanitiseNumber } from "./utils.js?v=rc12";
+import { QUANTITY_OPTIONS } from "./config.js?v=rc14";
+import { formatDimensions, roundMoney, sanitiseNumber } from "./utils.js?v=rc14";
 
 export function calculateGarmentBreakdown(costPrice, settings) {
   const baseCost = roundMoney(sanitiseNumber(costPrice, 0));
@@ -157,6 +157,24 @@ export function createQuoteItemSnapshot(draft, references, settings) {
     quantityBracket,
     garment,
     prints,
+    createdAt: draft.createdAt || new Date().toISOString(),
+  };
+}
+
+export function createQuoteItemRecord(draft, garmentId) {
+  const quantity = Math.max(1, Math.floor(sanitiseNumber(draft.quantity, 0)));
+
+  return {
+    id: draft.id,
+    quantityMode: draft.quantityMode === "custom" ? "custom" : "preset",
+    quantity,
+    customQuantity: draft.quantityMode === "custom" ? String(draft.customQuantity || quantity) : "",
+    garmentId: String(garmentId || "").trim(),
+    prints: (draft.prints ?? []).map((printLine) => ({
+      id: printLine.id,
+      positionId: String(printLine.positionId || "").trim(),
+      sizeId: String(printLine.sizeId || "").trim(),
+    })),
     createdAt: draft.createdAt || new Date().toISOString(),
   };
 }
