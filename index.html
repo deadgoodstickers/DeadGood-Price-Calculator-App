@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="DeadGood Quote Engine: premium internal mobile-first garment quote builder."
+    />
+    <meta name="theme-color" content="#0b0b0d" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-maskable.svg" />
+    <link rel="stylesheet" href="assets/styles.css?v=rc7" />
+    <title>DeadGood Quote Engine</title>
+  </head>
+  <body>
+    <div class="grid-backdrop" aria-hidden="true"></div>
+
+    <div class="drawer-shell" id="drawerShell">
+      <button
+        class="overlay-scrim"
+        id="drawerScrim"
+        type="button"
+        aria-label="Close navigation"
+      ></button>
+      <aside class="drawer-panel" aria-label="Navigation drawer">
+        <div class="drawer-header">
+          <p class="section-kicker">Menu</p>
+          <h2>DeadGood Printing</h2>
+        </div>
+
+        <nav class="drawer-nav" aria-label="Primary">
+          <button class="drawer-link is-active" data-page="quote" type="button">
+            Quote
+          </button>
+          <button class="drawer-link" data-page="saved-quotes" type="button">
+            Saved Quotes
+          </button>
+          <button class="drawer-link" data-page="garments" type="button">
+            Garments
+          </button>
+          <button class="drawer-link" data-page="pricing" type="button">
+            Print Pricing
+          </button>
+          <button class="drawer-link" data-page="settings" type="button">
+            Settings
+          </button>
+        </nav>
+
+        <div class="drawer-footer">
+          <button class="secondary-button full-button" id="installButton" hidden type="button">
+            Install app
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="sheet-shell" id="garmentSheetShell">
+      <button
+        class="overlay-scrim"
+        id="garmentSheetScrim"
+        type="button"
+        aria-label="Close garment picker"
+      ></button>
+      <section class="sheet-panel garment-sheet-panel">
+        <div class="sheet-head">
+          <div>
+            <h2>Choose garment</h2>
+          </div>
+          <button
+            class="icon-button"
+            id="closeGarmentSheetButton"
+            type="button"
+            aria-label="Close garment picker"
+          >
+            ✕
+          </button>
+        </div>
+
+        <label class="field compact-field sheet-search">
+          <input
+            id="quoteGarmentSearch"
+            type="search"
+            autocomplete="off"
+            placeholder="Search garments"
+          />
+        </label>
+
+        <div class="sheet-list" id="quoteGarmentResults"></div>
+        <p class="empty-copy" id="quoteGarmentResultsEmpty">
+          No saved garments found.
+        </p>
+
+        <button class="primary-button full-button" id="toggleGarmentCreatorButton" type="button">
+          Add a new garment
+        </button>
+
+        <div class="sheet-form stack-md" id="garmentCreatorPanel" hidden>
+          <div class="form-grid">
+            <label class="field">
+              <span>Name</span>
+              <input id="quoteGarmentName" type="text" placeholder="AT003 tee" />
+            </label>
+            <label class="field">
+              <span>Category</span>
+              <select id="quoteGarmentCategory"></select>
+            </label>
+            <label class="field">
+              <span>Brand</span>
+              <input id="quoteGarmentBrand" type="text" placeholder="AWDis" />
+            </label>
+            <label class="field">
+              <span>Code</span>
+              <input id="quoteGarmentCode" type="text" placeholder="AT003" />
+            </label>
+            <label class="field">
+              <span>Cost</span>
+              <div class="currency-input">
+                <span>£</span>
+                <input
+                  id="quoteGarmentCost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="0.00"
+                />
+              </div>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Notes</span>
+            <textarea
+              id="quoteGarmentNotes"
+              rows="3"
+              placeholder="Optional notes"
+            ></textarea>
+          </label>
+
+          <div class="summary-tile">
+            <div class="summary-line">
+              <span>Sell price</span>
+              <strong id="quoteGarmentSellPrice">£0.00</strong>
+            </div>
+            <details class="breakdown">
+              <summary>Internal breakdown</summary>
+              <div id="quoteGarmentBreakdown"></div>
+            </details>
+          </div>
+
+          <div class="button-row">
+            <button class="ghost-button" id="useDraftGarmentButton" type="button">
+              Use once
+            </button>
+            <button class="primary-button" id="quoteSaveGarmentButton" type="button">
+              Save & use
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="sheet-shell" id="printSheetShell">
+      <button
+        class="overlay-scrim"
+        id="printSheetScrim"
+        type="button"
+        aria-label="Close print builder"
+      ></button>
+      <section class="sheet-panel">
+        <div class="sheet-head">
+          <div>
+            <p class="section-kicker">Print</p>
+            <h2>Add print</h2>
+          </div>
+          <button
+            class="icon-button"
+            id="closePrintSheetButton"
+            type="button"
+            aria-label="Close print builder"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="sheet-section">
+          <span class="sheet-label">Position</span>
+          <div class="chip-grid option-grid" id="printPositionOptions"></div>
+        </div>
+
+        <div class="sheet-section">
+          <span class="sheet-label">Size</span>
+          <div class="chip-grid size-grid" id="printSizeOptions"></div>
+        </div>
+
+        <div class="summary-tile">
+          <div class="summary-line">
+            <span>Auto price</span>
+            <strong id="draftPrintComputedPrice">£0.00</strong>
+          </div>
+          <p class="helper-copy" id="draftPrintSizeMeta"></p>
+          <p class="helper-copy" id="draftPrintBracketMeta"></p>
+        </div>
+
+        <label class="field compact-field">
+          <span>Override price if needed</span>
+          <div class="currency-input">
+            <span>£</span>
+            <input
+              id="draftPrintPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="0.00"
+            />
+          </div>
+        </label>
+
+        <button class="primary-button full-button" id="savePrintButton" type="button">
+          Save print
+        </button>
+      </section>
+    </div>
+
+    <div class="sheet-shell" id="positionSheetShell">
+      <button
+        class="overlay-scrim"
+        id="positionSheetScrim"
+        type="button"
+        aria-label="Close position editor"
+      ></button>
+      <section class="sheet-panel">
+        <div class="sheet-head">
+          <div>
+            <h2 id="positionSheetTitle">Position details</h2>
+          </div>
+          <div class="sheet-head-actions">
+            <button
+              class="ghost-button compact-button square-button"
+              id="deletePositionButton"
+              type="button"
+              aria-label="Delete position"
+              hidden
+            >
+              ✕
+            </button>
+            <button
+              class="icon-button"
+              id="closePositionSheetButton"
+              type="button"
+              aria-label="Close position editor"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Position name</span>
+          <input id="positionEditorName" type="text" placeholder="Left Chest" />
+        </label>
+
+        <button class="primary-button full-button" id="savePositionButton" type="button">
+          Save position
+        </button>
+      </section>
+    </div>
+
+    <div class="sheet-shell" id="sizeSheetShell">
+      <button
+        class="overlay-scrim"
+        id="sizeSheetScrim"
+        type="button"
+        aria-label="Close size editor"
+      ></button>
+      <section class="sheet-panel">
+        <div class="sheet-head">
+          <div>
+            <h2 id="sizeSheetTitle">Size details</h2>
+          </div>
+          <div class="sheet-head-actions">
+            <button
+              class="ghost-button compact-button square-button"
+              id="deleteSizeButton"
+              type="button"
+              aria-label="Delete size"
+              hidden
+            >
+              ✕
+            </button>
+            <button
+              class="icon-button"
+              id="closeSizeSheetButton"
+              type="button"
+              aria-label="Close size editor"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Size label</span>
+            <input id="sizeEditorLabel" type="text" placeholder="A6" />
+          </label>
+          <label class="field">
+            <span>Width mm</span>
+            <input
+              id="sizeEditorWidth"
+              type="number"
+              min="0"
+              step="1"
+              inputmode="numeric"
+              placeholder="105"
+            />
+          </label>
+          <label class="field">
+            <span>Height mm</span>
+            <input
+              id="sizeEditorHeight"
+              type="number"
+              min="0"
+              step="1"
+              inputmode="numeric"
+              placeholder="148"
+            />
+          </label>
+        </div>
+
+        <button class="primary-button full-button" id="saveSizeButton" type="button">
+          Save size
+        </button>
+      </section>
+    </div>
+
+    <div class="sheet-shell" id="positionSizesSheetShell">
+      <button
+        class="overlay-scrim"
+        id="positionSizesSheetScrim"
+        type="button"
+        aria-label="Close position sizes"
+      ></button>
+      <section class="sheet-panel">
+        <div class="sheet-head">
+          <div>
+            <h2 id="positionSizesSheetTitle">Position sizes</h2>
+            <p class="helper-copy compact-note">
+              Tap a size to attach or remove it for this position.
+            </p>
+          </div>
+          <button
+            class="icon-button"
+            id="closePositionSizesSheetButton"
+            type="button"
+            aria-label="Close position sizes"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="manager-list selector-list" id="positionSizesList"></div>
+        <p class="empty-copy" id="positionSizesEmpty">No sizes available.</p>
+      </section>
+    </div>
+
+    <div class="sheet-shell" id="quoteSheetShell">
+      <button
+        class="overlay-scrim"
+        id="quoteSheetScrim"
+        type="button"
+        aria-label="Close quote summary"
+      ></button>
+      <section class="sheet-panel sheet-panel-large">
+        <div class="sheet-head">
+          <div>
+            <h2 id="quoteSheetName">Quote summary</h2>
+            <p class="helper-copy" id="quoteSheetEditedAt"></p>
+            <p class="helper-copy compact-note" id="quoteSheetBracketMeta">
+              Print pricing bracket: 10+
+            </p>
+          </div>
+          <button
+            class="icon-button"
+            id="closeQuoteSheetButton"
+            type="button"
+            aria-label="Close quote summary"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="summary-tile quote-stats-tile">
+          <div class="summary-line">
+            <span>Total garments</span>
+            <strong id="quoteGarmentCount">0 garments</strong>
+          </div>
+          <div class="summary-line">
+            <span>Product types</span>
+            <strong id="quoteProductTypeCount">0 product types</strong>
+          </div>
+        </div>
+
+        <div class="stack-sm" id="quoteItemsList"></div>
+        <article class="summary-card compact-delivery-card" id="quoteDeliveryCard">
+          <div class="summary-line compact-delivery-labels">
+            <span>Delivery</span>
+          </div>
+          <div class="compact-delivery-main">
+            <strong id="quoteDeliverySummaryService">DPD Next Day @ £10.00</strong>
+            <div class="delivery-stepper">
+              <button
+                class="icon-button delivery-stepper-button"
+                id="decreaseDeliveryBoxesButton"
+                type="button"
+                aria-label="Decrease delivery boxes"
+              >
+                −
+              </button>
+              <strong id="quoteDeliveryBoxesCount">0</strong>
+              <button
+                class="icon-button delivery-stepper-button"
+                id="increaseDeliveryBoxesButton"
+                type="button"
+                aria-label="Increase delivery boxes"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <p class="helper-copy compact-note" id="quoteDeliverySummaryBoxes">
+            Delivery total: £0.00
+          </p>
+        </article>
+
+        <div class="summary-tile">
+          <div class="summary-line">
+            <span>Items subtotal</span>
+            <strong id="quoteItemsSubtotalSummary">£0.00</strong>
+          </div>
+          <div class="summary-line">
+            <span>Delivery</span>
+            <strong id="quoteDeliveryTotalSummary">£0.00</strong>
+          </div>
+          <div class="summary-line total-line-emphasis">
+            <span>Quote total</span>
+            <strong id="quoteGrandTotal">£0.00</strong>
+          </div>
+        </div>
+        <p class="empty-copy" id="quoteItemsEmpty">No items in this quote yet.</p>
+      </section>
+    </div>
+
+    <div class="app-shell">
+      <header class="appbar">
+        <button
+          class="icon-button"
+          id="drawerToggleButton"
+          type="button"
+          aria-label="Open navigation"
+        >
+          ☰
+        </button>
+        <h1 class="app-title">
+          <img
+            class="app-logo"
+            src="https://cdn.shopify.com/s/files/1/0918/4795/0676/files/DGP.png?v=1777467884"
+            alt="DeadGood Printing"
+          />
+        </h1>
+      </header>
+
+      <main class="page-stack">
+        <section class="page is-active" id="page-quote" data-page="quote">
+          <div class="quote-layout">
+            <article class="card stack-md composer-card">
+              <section class="quote-meta-panel">
+                <div class="section-head">
+                  <div>
+                    <h2 id="currentQuoteHeading">New quote</h2>
+                  </div>
+                  <button
+                    class="ghost-button compact-button square-button"
+                    id="newQuoteButton"
+                    type="button"
+                    aria-label="New quote"
+                  >
+                    <span class="accent-icon" aria-hidden="true">+</span>
+                  </button>
+                </div>
+
+                <label class="field compact-field">
+                  <span>Quote name</span>
+                  <input
+                    id="quoteNameInput"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Start a new quote..."
+                    required
+                  />
+                </label>
+
+                <div class="quote-meta-row">
+                  <p class="helper-copy" id="activeQuoteMeta">Auto-saved locally</p>
+                  <div class="inline-actions quote-meta-actions">
+                    <button
+                      class="primary-button compact-button"
+                      id="saveQuoteNameButton"
+                      type="button"
+                    >
+                      Save
+                    </button>
+                    <button
+                      class="secondary-button compact-button"
+                      id="openSavedQuotesButton"
+                      type="button"
+                    >
+                      Saved quotes
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <div class="builder-shell" id="itemBuilderShell">
+                <div class="section-head">
+                  <div>
+                    <h2>Add items</h2>
+                  </div>
+                  <button
+                    class="ghost-button compact-button square-button"
+                    id="resetDraftButton"
+                    type="button"
+                    aria-label="Reset current item"
+                  >
+                    ↺
+                  </button>
+                </div>
+
+                <p class="helper-copy compact-note" id="itemBuilderLockNote"></p>
+
+                <section class="composer-section">
+                  <div class="composer-row">
+                    <div class="step-label">
+                      <span class="step-badge">1</span>
+                      <h3>Garment</h3>
+                    </div>
+                  </div>
+                  <div id="currentGarmentCard"></div>
+                </section>
+
+                <section class="composer-section" id="quantityStage">
+                  <div class="composer-row">
+                    <div class="step-label">
+                      <span class="step-badge">2</span>
+                      <h3>Quantity</h3>
+                    </div>
+                  </div>
+                  <div class="chip-grid quantity-grid" id="quantityOptions"></div>
+
+                  <div class="custom-quantity-panel" id="customQuantityPanel" hidden>
+                    <label class="field compact-field">
+                      <span>Custom quantity</span>
+                      <input
+                        id="customQuantityInput"
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="Enter quantity"
+                      />
+                    </label>
+                  </div>
+
+                  <p class="helper-copy" id="quantityBracketMeta"></p>
+                </section>
+
+                <section class="composer-section" id="printsStage">
+                  <div class="composer-row">
+                    <div class="step-label">
+                      <span class="step-badge">3</span>
+                      <h3>Prints</h3>
+                    </div>
+                    <button
+                      class="primary-button compact-button"
+                      id="openPrintSheetButton"
+                      type="button"
+                    >
+                      Add print
+                    </button>
+                  </div>
+                  <div class="stack-sm" id="draftPrintList"></div>
+                  <p class="empty-copy" id="draftPrintsEmpty">No prints added.</p>
+                </section>
+
+                <section class="composer-section" id="totalsStage">
+                  <div class="composer-row">
+                    <div class="step-label">
+                      <span class="step-badge">4</span>
+                      <h3>Item totals</h3>
+                    </div>
+                  </div>
+                  <div class="item-preview" id="draftItemPreview"></div>
+                  <button class="primary-button full-button" id="addQuoteItemButton" type="button">
+                    Add item to quote
+                  </button>
+                </section>
+
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-saved-quotes" data-page="saved-quotes" hidden>
+          <div class="page-grid">
+            <article class="card stack-md">
+              <div class="section-head">
+                <div>
+                  <h2>Saved quotes</h2>
+                </div>
+                <button class="primary-button compact-button" id="newQuotePageButton" type="button">
+                  New quote
+                </button>
+              </div>
+
+              <div class="stack-sm" id="savedQuotesList"></div>
+              <p class="empty-copy" id="savedQuotesEmpty">No saved quotes yet.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-garments" data-page="garments" hidden>
+          <div class="page-grid management-grid">
+            <article class="card stack-md">
+              <div class="section-head">
+                <div>
+                  <h2>Saved garments</h2>
+                </div>
+              </div>
+
+              <div class="library-search">
+                <input
+                  id="garmentLibrarySearch"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Search garments"
+                />
+              </div>
+
+              <div class="inline-actions">
+                <button
+                  class="secondary-button compact-button"
+                  id="loadDemoGarmentsButton"
+                  type="button"
+                >
+                  Load demo garments
+                </button>
+                <p class="helper-copy compact-note">Adds missing test garments only.</p>
+              </div>
+
+              <div class="stack-sm" id="garmentLibraryList"></div>
+              <p class="empty-copy" id="garmentLibraryEmpty">No garments saved.</p>
+            </article>
+
+            <article class="card stack-md">
+              <div class="section-head">
+                <div>
+                  <h2>Categories</h2>
+                </div>
+              </div>
+
+              <div class="inline-entry category-entry-row">
+                <input id="newGarmentCategory" type="text" placeholder="Add category" />
+                <button
+                  class="secondary-button compact-button"
+                  id="addGarmentCategoryButton"
+                  type="button"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div class="stack-sm" id="garmentCategoryList"></div>
+            </article>
+
+            <article class="card stack-md page-span">
+              <div class="section-head">
+                <div>
+                  <h2>Garment details</h2>
+                </div>
+                <button
+                  class="ghost-button compact-button square-button"
+                  id="garmentEditorClearButton"
+                  type="button"
+                  aria-label="Clear garment details"
+                >
+                  ↺
+                </button>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Name</span>
+                  <input id="garmentEditorName" type="text" placeholder="Heavy hoodie" />
+                </label>
+                <label class="field">
+                  <span>Category</span>
+                  <select id="garmentEditorCategory"></select>
+                </label>
+                <label class="field">
+                  <span>Brand</span>
+                  <input id="garmentEditorBrand" type="text" placeholder="AWDis" />
+                </label>
+                <label class="field">
+                  <span>Code</span>
+                  <input id="garmentEditorCode" type="text" placeholder="JH001" />
+                </label>
+                <label class="field">
+                  <span>Cost</span>
+                  <div class="currency-input">
+                    <span>£</span>
+                    <input
+                      id="garmentEditorCost"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputmode="decimal"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Notes</span>
+                <textarea
+                  id="garmentEditorNotes"
+                  rows="4"
+                  placeholder="Optional notes"
+                ></textarea>
+              </label>
+
+              <div class="summary-tile garment-sell-tile">
+                <div class="summary-line">
+                  <span>Calculated sell price</span>
+                  <strong id="garmentEditorSellPrice">£0.00</strong>
+                </div>
+              </div>
+
+              <div class="stack-sm garment-editor-actions">
+                <button class="primary-button full-button" id="garmentEditorSaveButton" type="button">
+                  Save garment
+                </button>
+                <button
+                  class="ghost-button compact-button full-button"
+                  id="garmentEditorDeleteButton"
+                  type="button"
+                >
+                  Delete garment
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-pricing" data-page="pricing" hidden>
+          <div class="page-grid management-grid">
+            <article class="card stack-md page-span">
+              <div class="section-head">
+                <div>
+                  <h2>Print positions</h2>
+                </div>
+              </div>
+
+              <div class="manager-list" id="positionList"></div>
+              <button class="primary-button full-button" id="openPositionCreateButton" type="button">
+                + Add position
+              </button>
+            </article>
+
+            <article class="card stack-md page-span">
+              <div class="section-head">
+                <div>
+                  <h2>Print sizes</h2>
+                </div>
+              </div>
+
+              <div class="manager-list" id="sizeList"></div>
+              <button class="primary-button full-button" id="openSizeCreateButton" type="button">
+                + Add size
+              </button>
+            </article>
+
+            <article class="card stack-md page-span">
+              <div class="section-head">
+                <div>
+                  <h2>Pricing</h2>
+                </div>
+              </div>
+
+              <div class="pricing-control-grid">
+                <label class="field">
+                  <span>Position</span>
+                  <select id="pricingPositionSelect"></select>
+                </label>
+                <label class="field">
+                  <span>Size</span>
+                  <select id="pricingSizeSelect"></select>
+                </label>
+              </div>
+
+              <div class="summary-tile pricing-size-links">
+                <div class="summary-line">
+                  <span>Sizes for this position</span>
+                  <button
+                    class="secondary-button compact-button"
+                    id="openPositionSizesSheetButton"
+                    type="button"
+                  >
+                    Edit sizes
+                  </button>
+                </div>
+                <div class="attached-size-list" id="pricingAttachedSizes"></div>
+                <p class="helper-copy compact-note" id="pricingAttachedSizesEmpty">
+                  No sizes attached to this position yet.
+                </p>
+              </div>
+
+              <div class="summary-tile pricing-combo-tile" id="pricingComboTile">
+                <div class="summary-line">
+                  <span id="pricingComboPositionLabel">Position</span>
+                  <strong id="pricingComboSizeLabel">Size</strong>
+                </div>
+                <p class="helper-copy compact-note" id="pricingComboMeta"></p>
+              </div>
+
+              <div class="pricing-editor-list" id="pricingCards"></div>
+              <p class="empty-copy" id="pricingCardsEmpty">
+                Attach at least one size to start editing prices.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-settings" data-page="settings" hidden>
+          <div class="page-grid settings-grid">
+            <article class="card stack-md">
+              <div class="section-head">
+                <div>
+                  <p class="section-kicker">Settings</p>
+                  <h2>Internal calculations</h2>
+                </div>
+              </div>
+
+              <label class="field compact-field">
+                <span>VAT %</span>
+                <input
+                  id="settingsVatRate"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  inputmode="decimal"
+                />
+              </label>
+
+              <label class="field compact-field">
+                <span>Markup %</span>
+                <input
+                  id="settingsMarkupRate"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  inputmode="decimal"
+                />
+              </label>
+
+              <div class="summary-tile">
+                <div class="summary-line">
+                  <span>Formula</span>
+                  <strong>Cost + VAT + markup</strong>
+                </div>
+              </div>
+
+              <div class="section-head settings-subhead">
+                <div>
+                  <p class="section-kicker">Settings</p>
+                  <h3>Delivery defaults</h3>
+                </div>
+              </div>
+
+              <label class="field compact-field">
+                <span>Delivery service name</span>
+                <input
+                  id="settingsDeliveryServiceName"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="DPD Next Day"
+                />
+              </label>
+
+              <label class="field compact-field">
+                <span>Price per box</span>
+                <div class="currency-input">
+                  <span>£</span>
+                  <input
+                    id="settingsDeliveryPricePerBox"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="0.00"
+                  />
+                </div>
+              </label>
+
+              <label class="field compact-field">
+                <span>Default boxes per quote</span>
+                <input
+                  id="settingsDefaultDeliveryBoxes"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputmode="numeric"
+                />
+              </label>
+
+              <div class="button-row">
+                <button class="primary-button" id="saveSettingsButton" type="button">
+                  Save settings
+                </button>
+                <button class="ghost-button" id="resetAppButton" type="button">
+                  Reset current quote
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <aside class="quote-bar" id="quoteBar" aria-label="Quote total">
+      <div class="quote-bar-total">
+        <span>Total</span>
+        <strong id="footerGrandTotal">£0.00</strong>
+      </div>
+      <button class="primary-button quote-bar-button" id="openQuoteSheetButton" type="button">
+        View quote
+      </button>
+    </aside>
+
+    <script type="module" src="assets/app.js?v=rc7"></script>
+  </body>
+</html>
