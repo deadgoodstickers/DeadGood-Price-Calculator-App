@@ -10,7 +10,7 @@ import {
   lookupPrintPrice,
   resolveDeliveryBoxes,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc11";
+} from "./calculations.js?v=rc12";
 import {
   createDefaultQuoteDelivery,
   createEmptyQuoteDraft,
@@ -18,7 +18,7 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc11";
+} from "./config.js?v=rc12";
 import {
   hydrateGarments,
   hydratePricing,
@@ -27,7 +27,7 @@ import {
   hydrateQuoteItems,
   loadAppState,
   persist,
-} from "./storage.js?v=rc11";
+} from "./storage.js?v=rc12";
 import {
   deepClone,
   escapeHtml,
@@ -38,10 +38,11 @@ import {
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc11";
+} from "./utils.js?v=rc12";
 
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
+let pendingConfirmAction = null;
 
 const state = {
   settings: loadedState.settings,
@@ -73,8 +74,9 @@ const state = {
     loadedState.uiState.garmentLibraryOpenCategories,
   ),
   drawerOpen: false,
-  quoteDeleteDialogOpen: false,
-  pendingDeleteQuoteId: "",
+  confirmDialogOpen: false,
+  confirmDialogTitle: "Delete item?",
+  confirmDialogMessage: "This action cannot be undone.",
   garmentSheetOpen: false,
   printSheetOpen: false,
   quoteSheetOpen: false,
@@ -107,10 +109,12 @@ const elements = {
   quoteSheetShell: document.querySelector("#quoteSheetShell"),
   quoteSheetScrim: document.querySelector("#quoteSheetScrim"),
   closeQuoteSheetButton: document.querySelector("#closeQuoteSheetButton"),
-  quoteDeleteDialogShell: document.querySelector("#quoteDeleteDialogShell"),
-  quoteDeleteDialogScrim: document.querySelector("#quoteDeleteDialogScrim"),
-  cancelQuoteDeleteButton: document.querySelector("#cancelQuoteDeleteButton"),
-  confirmQuoteDeleteButton: document.querySelector("#confirmQuoteDeleteButton"),
+  confirmDialogShell: document.querySelector("#confirmDialogShell"),
+  confirmDialogScrim: document.querySelector("#confirmDialogScrim"),
+  confirmDialogTitle: document.querySelector("#confirmDialogTitle"),
+  confirmDialogMessage: document.querySelector("#confirmDialogMessage"),
+  cancelConfirmDialogButton: document.querySelector("#cancelConfirmDialogButton"),
+  confirmDialogDeleteButton: document.querySelector("#confirmDialogDeleteButton"),
   quoteSheetName: document.querySelector("#quoteSheetName"),
   currentQuoteHeading: document.querySelector("#currentQuoteHeading"),
   quoteSheetEditedAt: document.querySelector("#quoteSheetEditedAt"),
@@ -387,7 +391,7 @@ function bindEvents() {
   elements.garmentEditorCost.addEventListener("input", handleGarmentEditorInput);
   elements.garmentEditorNotes.addEventListener("input", handleGarmentEditorInput);
   elements.garmentEditorSaveButton.addEventListener("click", saveGarmentFromEditor);
-  elements.garmentEditorDeleteButton.addEventListener("click", deleteGarmentFromEditor);
+  elements.garmentEditorDeleteButton.addEventListener("click", requestDeleteGarmentFromEditor);
   elements.garmentEditorClearButton.addEventListener("click", clearGarmentEditor);
 
   elements.openPositionCreateButton.addEventListener("click", openPositionSheetForCreate);
@@ -401,14 +405,15 @@ function bindEvents() {
   elements.positionSizesList.addEventListener("click", handlePositionSizesListClick);
 
   elements.saveSettingsButton.addEventListener("click", saveSettings);
-  elements.quoteDeleteDialogScrim.addEventListener("click", closeQuoteDeleteDialog);
-  elements.cancelQuoteDeleteButton.addEventListener("click", closeQuoteDeleteDialog);
-  elements.confirmQuoteDeleteButton.addEventListener("click", confirmDeleteQuote);
-
+  elements.confirmDialogScrim.addEventListener("click", closeConfirmDialog);
+  elements.cancelConfirmDialogButton.addEventListener("click", closeConfirmDialog);
+  elements.confirmDialogDeleteButton.addEventListener("click", confirmDeleteAction);
+  document.addEventListener("keydown", handleGlobalKeyDown);
 }
 
 function renderApp() {
   renderAppShell();
+  renderConfirmDialog();
   renderQuoteMeta();
   renderQuoteComposer();
   renderQuoteSummary();
@@ -447,11 +452,11 @@ function renderAppShell() {
   elements.positionSheetShell.classList.toggle("is-open", state.positionSheetOpen);
   elements.sizeSheetShell.classList.toggle("is-open", state.sizeSheetOpen);
   elements.positionSizesSheetShell.classList.toggle("is-open", state.positionSizesSheetOpen);
-  elements.quoteDeleteDialogShell.classList.toggle("is-open", state.quoteDeleteDialogOpen);
+  elements.confirmDialogShell.classList.toggle("is-open", state.confirmDialogOpen);
 
   const uiLocked =
     state.drawerOpen ||
-    state.quoteDeleteDialogOpen ||
+    state.confirmDialogOpen ||
     state.garmentSheetOpen ||
     state.printSheetOpen ||
     state.quoteSheetOpen ||
@@ -459,6 +464,11 @@ function renderAppShell() {
     state.sizeSheetOpen ||
     state.positionSizesSheetOpen;
   elements.body.classList.toggle("ui-locked", uiLocked);
+}
+
+function renderConfirmDialog() {
+  elements.confirmDialogTitle.textContent = state.confirmDialogTitle;
+  elements.confirmDialogMessage.textContent = state.confirmDialogMessage;
 }
 
 function renderQuoteMeta() {
@@ -842,7 +852,11 @@ function renderSavedQuotes() {
           </button>
 
           <div class="saved-quote-actions">
-            <button class="primary-button compact-button" data-open-quote="${quote.id}" type="button">
+            <button
+              class="primary-button compact-button saved-quote-open-button"
+              data-open-quote="${quote.id}"
+              type="button"
+            >
               Open
             </button>
             <button
@@ -1335,33 +1349,52 @@ function closeDrawer() {
   renderAppShell();
 }
 
+function handleGlobalKeyDown(event) {
+  if (event.key === "Escape" && state.confirmDialogOpen) {
+    event.preventDefault();
+    closeConfirmDialog();
+  }
+}
+
+function openDeleteDialog({ title, message = "This action cannot be undone.", onConfirm }) {
+  if (typeof onConfirm !== "function") {
+    return;
+  }
+
+  pendingConfirmAction = onConfirm;
+  state.confirmDialogTitle = title;
+  state.confirmDialogMessage = message;
+  state.confirmDialogOpen = true;
+  state.drawerOpen = false;
+  renderConfirmDialog();
+  renderAppShell();
+}
+
+function closeConfirmDialog() {
+  state.confirmDialogOpen = false;
+  state.confirmDialogTitle = "Delete item?";
+  state.confirmDialogMessage = "This action cannot be undone.";
+  pendingConfirmAction = null;
+  renderConfirmDialog();
+  renderAppShell();
+}
+
+function confirmDeleteAction() {
+  const action = pendingConfirmAction;
+  closeConfirmDialog();
+  action?.();
+}
+
 function openQuoteDeleteDialog(quoteId) {
   const quote = state.quotes.find((item) => item.id === quoteId);
   if (!quote) {
     return;
   }
 
-  state.pendingDeleteQuoteId = quoteId;
-  state.quoteDeleteDialogOpen = true;
-  state.drawerOpen = false;
-  renderAppShell();
-}
-
-function closeQuoteDeleteDialog() {
-  state.quoteDeleteDialogOpen = false;
-  state.pendingDeleteQuoteId = "";
-  renderAppShell();
-}
-
-function confirmDeleteQuote() {
-  if (!state.pendingDeleteQuoteId) {
-    closeQuoteDeleteDialog();
-    return;
-  }
-
-  const quoteId = state.pendingDeleteQuoteId;
-  closeQuoteDeleteDialog();
-  deleteQuote(quoteId);
+  openDeleteDialog({
+    title: "Delete quote?",
+    onConfirm: () => deleteQuote(quoteId),
+  });
 }
 
 function openGarmentSheet() {
@@ -1691,15 +1724,7 @@ function handleDraftPrintListClick(event) {
     return;
   }
 
-  state.quoteDraft.prints = state.quoteDraft.prints.filter(
-    (printLine) => printLine.id !== button.dataset.removePrint,
-  );
-  renderDraftPrints();
-  renderDraftPreview();
-  renderQuoteSummary();
-  persistActiveQuote();
-  renderQuoteMeta();
-  renderSavedQuotes();
+  requestDeleteDraftPrint(button.dataset.removePrint);
 }
 
 function handleQuoteItemListClick(event) {
@@ -1717,7 +1742,7 @@ function handleQuoteItemListClick(event) {
 
   const removeButton = event.target.closest("[data-remove-quote-item]");
   if (removeButton) {
-    deleteQuoteItem(removeButton.dataset.removeQuoteItem);
+    requestDeleteQuoteItem(removeButton.dataset.removeQuoteItem);
   }
 }
 
@@ -1778,7 +1803,7 @@ function handleGarmentCategoryListClick(event) {
   }
 
   const categoryId = button.dataset.deleteCategory;
-  deleteGarmentCategory(categoryId);
+  requestDeleteGarmentCategory(categoryId);
 }
 
 function handleGarmentCategoryListInput(event) {
@@ -2092,6 +2117,40 @@ function duplicateQuoteItem(itemId) {
   renderSavedQuotes();
 }
 
+function requestDeleteDraftPrint(printId) {
+  const printLine = state.quoteDraft.prints.find((item) => item.id === printId);
+  if (!printLine) {
+    return;
+  }
+
+  openDeleteDialog({
+    title: "Delete print?",
+    onConfirm: () => deleteDraftPrint(printId),
+  });
+}
+
+function deleteDraftPrint(printId) {
+  state.quoteDraft.prints = state.quoteDraft.prints.filter((printLine) => printLine.id !== printId);
+  renderDraftPrints();
+  renderDraftPreview();
+  renderQuoteSummary();
+  persistActiveQuote();
+  renderQuoteMeta();
+  renderSavedQuotes();
+}
+
+function requestDeleteQuoteItem(itemId) {
+  const item = state.quoteItems.find((quoteItem) => quoteItem.id === itemId);
+  if (!item) {
+    return;
+  }
+
+  openDeleteDialog({
+    title: "Delete item?",
+    onConfirm: () => deleteQuoteItem(itemId),
+  });
+}
+
 function deleteQuoteItem(itemId) {
   state.quoteItems = state.quoteItems.filter((item) => item.id !== itemId);
   state.quoteItems = applyQuotePrintPricing(state.quoteItems, state.pricing);
@@ -2179,6 +2238,17 @@ function deleteQuote(quoteId) {
   renderApp();
 }
 
+function requestDeleteGarmentFromEditor() {
+  if (!state.garmentEditorId) {
+    return;
+  }
+
+  openDeleteDialog({
+    title: "Delete garment?",
+    onConfirm: () => deleteGarmentFromEditor(),
+  });
+}
+
 function saveGarmentFromEditor() {
   const garment = createEditorGarmentSnapshot();
   if (!garment.name.trim() || sanitiseNumber(garment.costPrice, 0) <= 0) {
@@ -2257,7 +2327,7 @@ function addGarmentCategory() {
   renderGarmentLibrary();
 }
 
-function deleteGarmentCategory(categoryId) {
+function requestDeleteGarmentCategory(categoryId) {
   const category = getCategoryById(categoryId);
   if (!category || state.garmentCategories.length <= 1) {
     return;
@@ -2268,7 +2338,21 @@ function deleteGarmentCategory(categoryId) {
     return;
   }
 
-  if (!window.confirm(`Delete "${category.label}" and move garments to ${getCategoryLabel(replacementCategoryId)}?`)) {
+  openDeleteDialog({
+    title: "Delete category?",
+    message: `Garments in this category will move to ${getCategoryLabel(replacementCategoryId)}. This action cannot be undone.`,
+    onConfirm: () => deleteGarmentCategory(categoryId),
+  });
+}
+
+function deleteGarmentCategory(categoryId) {
+  const category = getCategoryById(categoryId);
+  if (!category || state.garmentCategories.length <= 1) {
+    return;
+  }
+
+  const replacementCategoryId = state.garmentCategories.find((item) => item.id !== categoryId)?.id;
+  if (!replacementCategoryId) {
     return;
   }
 
@@ -2354,8 +2438,7 @@ function deletePositionFromSheet() {
     return;
   }
 
-  removePositionById(state.positionEditorId);
-  closePositionSheet();
+  requestDeletePosition(state.positionEditorId);
 }
 
 function saveSizeFromSheet() {
@@ -2416,17 +2499,27 @@ function deleteSizeFromSheet() {
     return;
   }
 
-  removeSizeById(state.sizeEditorId);
-  closeSizeSheet();
+  requestDeleteSize(state.sizeEditorId);
+}
+
+function requestDeletePosition(positionId) {
+  const position = getPositionById(positionId);
+  if (!position || state.positions.length <= 1) {
+    return;
+  }
+
+  openDeleteDialog({
+    title: "Delete position?",
+    onConfirm: () => {
+      removePositionById(positionId);
+      closePositionSheet();
+    },
+  });
 }
 
 function removePositionById(positionId) {
   const position = getPositionById(positionId);
   if (!position) {
-    return;
-  }
-
-  if (!window.confirm(`Delete "${position.label}"?`)) {
     return;
   }
 
@@ -2461,13 +2554,24 @@ function removePositionById(positionId) {
   renderSavedQuotes();
 }
 
-function removeSizeById(sizeId) {
+function requestDeleteSize(sizeId) {
   const size = getSizeById(sizeId);
-  if (!size) {
+  if (!size || state.sizes.length <= 1) {
     return;
   }
 
-  if (!window.confirm(`Delete "${size.label}"?`)) {
+  openDeleteDialog({
+    title: "Delete size?",
+    onConfirm: () => {
+      removeSizeById(sizeId);
+      closeSizeSheet();
+    },
+  });
+}
+
+function removeSizeById(sizeId) {
+  const size = getSizeById(sizeId);
+  if (!size) {
     return;
   }
 

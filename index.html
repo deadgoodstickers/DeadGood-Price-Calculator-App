@@ -99,13 +99,13 @@
         }
       }
     </style>
-    <link rel="manifest" href="manifest.webmanifest?v=brand-4" />
+    <link rel="manifest" href="manifest.webmanifest?v=brand-5" />
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
     <link rel="preload" as="image" href="assets/icons/deadgood-logo.png" />
-    <link rel="stylesheet" href="assets/styles.css?v=rc11" />
+    <link rel="stylesheet" href="assets/styles.css?v=rc12" />
     <title>DeadGood Printing</title>
   </head>
   <body>
@@ -138,9 +138,10 @@
           <button class="drawer-link is-active" data-page="quote" type="button">
             <span class="drawer-link-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 5h16v14H4z"></path>
-                <path d="M8 9h8"></path>
-                <path d="M8 13h5"></path>
+                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M9 13h6"></path>
+                <path d="M9 17h4"></path>
               </svg>
             </span>
             <span class="drawer-link-label">Quote</span>
@@ -148,11 +149,9 @@
           <button class="drawer-link" data-page="saved-quotes" type="button">
             <span class="drawer-link-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 7.5A1.5 1.5 0 0 1 7.5 6H14l4 4v8A1.5 1.5 0 0 1 16.5 19h-9A1.5 1.5 0 0 1 6 17.5z"></path>
-                <path d="M14 6v4h4"></path>
-                <path d="M9 11h4"></path>
-                <path d="M9 14h6"></path>
-                <path d="M8 5h6"></path>
+                <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2h6.5A1.5 1.5 0 0 1 20 9.5v8A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"></path>
+                <path d="M8 12h8"></path>
+                <path d="M8 15h5"></path>
               </svg>
             </span>
             <span class="drawer-link-label">Saved Quotes</span>
@@ -169,14 +168,11 @@
           <button class="drawer-link" data-page="pricing" type="button">
             <span class="drawer-link-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4.5" y="3.5" width="15" height="17" rx="2.5"></rect>
-                <path d="M8 7h8"></path>
-                <path d="M8 11h2"></path>
-                <path d="M12 11h2"></path>
-                <path d="M16 11h0"></path>
-                <path d="M8 15h2"></path>
-                <path d="M12 15h2"></path>
-                <path d="M16 15h0"></path>
+                <path d="M20 12.5 12.5 20 4 11.5V4h7.5z"></path>
+                <path d="M7.5 7.5h.01"></path>
+                <path d="M11 9h3"></path>
+                <path d="M12.5 9v6"></path>
+                <path d="M11 15h3"></path>
               </svg>
             </span>
             <span class="drawer-link-label">Print Pricing</span>
@@ -196,6 +192,12 @@
           <button class="secondary-button full-button" id="installButton" hidden type="button">
             Install app
           </button>
+          <div class="drawer-about" aria-label="App information">
+            <strong>DeadGood Quote Engine</strong>
+            <span>Version 0.9.4</span>
+            <span>Built for</span>
+            <span class="drawer-about-brand">DeadGood Printing</span>
+          </div>
         </div>
       </aside>
     </div>
@@ -763,7 +765,11 @@
               <div class="page-title-copy">
                 <h2>Saved Quotes</h2>
               </div>
-              <button class="primary-button compact-button" id="newQuotePageButton" type="button">
+              <button
+                class="primary-button compact-button saved-quotes-header-button"
+                id="newQuotePageButton"
+                type="button"
+              >
                 + New Quote
               </button>
             </div>
@@ -893,8 +899,19 @@
             <p class="empty-copy" id="garmentLibraryEmpty">No garments saved.</p>
 
             <details class="manager-details admin-panel">
-              <summary>
-                <strong>Manage Categories</strong>
+              <summary class="admin-panel-summary">
+                <div class="admin-panel-title">
+                  <span class="admin-panel-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 6h10"></path>
+                      <path d="M4 12h16"></path>
+                      <path d="M4 18h10"></path>
+                      <circle cx="17" cy="6" r="2"></circle>
+                      <circle cx="9" cy="18" r="2"></circle>
+                    </svg>
+                  </span>
+                  <strong>Manage Categories</strong>
+                </div>
               </summary>
 
               <div class="manager-detail-body stack-md">
@@ -1003,27 +1020,29 @@
                   <p class="helper-copy compact-note">Used to calculate garment sell prices.</p>
                 </div>
 
-                <label class="field compact-field">
-                  <span>VAT %</span>
-                  <input
-                    id="settingsVatRate"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    inputmode="decimal"
-                  />
-                </label>
+                <div class="settings-pair-grid">
+                  <label class="field compact-field">
+                    <span>VAT %</span>
+                    <input
+                      id="settingsVatRate"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      inputmode="decimal"
+                    />
+                  </label>
 
-                <label class="field compact-field">
-                  <span>Markup %</span>
-                  <input
-                    id="settingsMarkupRate"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    inputmode="decimal"
-                  />
-                </label>
+                  <label class="field compact-field">
+                    <span>Markup %</span>
+                    <input
+                      id="settingsMarkupRate"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      inputmode="decimal"
+                    />
+                  </label>
+                </div>
 
                 <div class="summary-tile">
                   <div class="summary-line">
@@ -1049,31 +1068,33 @@
                   />
                 </label>
 
-                <label class="field compact-field">
-                  <span>Price per box</span>
-                  <div class="currency-input">
-                    <span>£</span>
+                <div class="settings-pair-grid">
+                  <label class="field compact-field">
+                    <span>Price per box</span>
+                    <div class="currency-input">
+                      <span>£</span>
+                      <input
+                        id="settingsDeliveryPricePerBox"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </label>
+
+                  <label class="field compact-field">
+                    <span>Default boxes per quote</span>
                     <input
-                      id="settingsDeliveryPricePerBox"
+                      id="settingsDefaultDeliveryBoxes"
                       type="number"
                       min="0"
-                      step="0.01"
-                      inputmode="decimal"
-                      placeholder="0.00"
+                      step="1"
+                      inputmode="numeric"
                     />
-                  </div>
-                </label>
-
-                <label class="field compact-field">
-                  <span>Default boxes per quote</span>
-                  <input
-                    id="settingsDefaultDeliveryBoxes"
-                    type="number"
-                    min="0"
-                    step="1"
-                    inputmode="numeric"
-                  />
-                </label>
+                  </label>
+                </div>
               </section>
             </article>
 
@@ -1085,36 +1106,36 @@
       </main>
     </div>
 
-    <div class="sheet-shell dialog-shell" id="quoteDeleteDialogShell">
+    <div class="sheet-shell dialog-shell" id="confirmDialogShell">
       <button
         class="overlay-scrim"
-        id="quoteDeleteDialogScrim"
+        id="confirmDialogScrim"
         type="button"
-        aria-label="Close delete quote confirmation"
+        aria-label="Close delete confirmation"
       ></button>
       <section
         class="dialog-panel"
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="quoteDeleteDialogTitle"
-        aria-describedby="quoteDeleteDialogMessage"
+        aria-labelledby="confirmDialogTitle"
+        aria-describedby="confirmDialogMessage"
       >
         <div class="stack-md">
           <div class="stack-sm">
-            <h2 id="quoteDeleteDialogTitle">Delete this quote?</h2>
-            <p class="helper-copy" id="quoteDeleteDialogMessage">This cannot be undone.</p>
+            <h2 id="confirmDialogTitle">Delete item?</h2>
+            <p class="helper-copy" id="confirmDialogMessage">This action cannot be undone.</p>
           </div>
           <div class="dialog-actions">
             <button
               class="secondary-button compact-button full-button"
-              id="cancelQuoteDeleteButton"
+              id="cancelConfirmDialogButton"
               type="button"
             >
               Cancel
             </button>
             <button
               class="danger-button compact-button full-button"
-              id="confirmQuoteDeleteButton"
+              id="confirmDialogDeleteButton"
               type="button"
             >
               Delete
@@ -1134,6 +1155,6 @@
       </button>
     </aside>
 
-    <script type="module" src="assets/app.js?v=rc11"></script>
+    <script type="module" src="assets/app.js?v=rc12"></script>
   </body>
 </html>
