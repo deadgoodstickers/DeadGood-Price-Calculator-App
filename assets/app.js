@@ -10,7 +10,7 @@ import {
   lookupPrintPrice,
   resolveDeliveryBoxes,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc9";
+} from "./calculations.js?v=rc11";
 import {
   createDefaultQuoteDelivery,
   createEmptyQuoteDraft,
@@ -18,7 +18,7 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc9";
+} from "./config.js?v=rc11";
 import {
   hydrateGarments,
   hydratePricing,
@@ -27,7 +27,7 @@ import {
   hydrateQuoteItems,
   loadAppState,
   persist,
-} from "./storage.js?v=rc9";
+} from "./storage.js?v=rc11";
 import {
   deepClone,
   escapeHtml,
@@ -38,7 +38,7 @@ import {
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc9";
+} from "./utils.js?v=rc11";
 
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
@@ -73,6 +73,8 @@ const state = {
     loadedState.uiState.garmentLibraryOpenCategories,
   ),
   drawerOpen: false,
+  quoteDeleteDialogOpen: false,
+  pendingDeleteQuoteId: "",
   garmentSheetOpen: false,
   printSheetOpen: false,
   quoteSheetOpen: false,
@@ -105,6 +107,10 @@ const elements = {
   quoteSheetShell: document.querySelector("#quoteSheetShell"),
   quoteSheetScrim: document.querySelector("#quoteSheetScrim"),
   closeQuoteSheetButton: document.querySelector("#closeQuoteSheetButton"),
+  quoteDeleteDialogShell: document.querySelector("#quoteDeleteDialogShell"),
+  quoteDeleteDialogScrim: document.querySelector("#quoteDeleteDialogScrim"),
+  cancelQuoteDeleteButton: document.querySelector("#cancelQuoteDeleteButton"),
+  confirmQuoteDeleteButton: document.querySelector("#confirmQuoteDeleteButton"),
   quoteSheetName: document.querySelector("#quoteSheetName"),
   currentQuoteHeading: document.querySelector("#currentQuoteHeading"),
   quoteSheetEditedAt: document.querySelector("#quoteSheetEditedAt"),
@@ -237,7 +243,6 @@ const elements = {
   settingsDeliveryPricePerBox: document.querySelector("#settingsDeliveryPricePerBox"),
   settingsDefaultDeliveryBoxes: document.querySelector("#settingsDefaultDeliveryBoxes"),
   saveSettingsButton: document.querySelector("#saveSettingsButton"),
-  resetAppButton: document.querySelector("#resetAppButton"),
 };
 
 initialize();
@@ -396,7 +401,10 @@ function bindEvents() {
   elements.positionSizesList.addEventListener("click", handlePositionSizesListClick);
 
   elements.saveSettingsButton.addEventListener("click", saveSettings);
-  elements.resetAppButton.addEventListener("click", resetCurrentQuote);
+  elements.quoteDeleteDialogScrim.addEventListener("click", closeQuoteDeleteDialog);
+  elements.cancelQuoteDeleteButton.addEventListener("click", closeQuoteDeleteDialog);
+  elements.confirmQuoteDeleteButton.addEventListener("click", confirmDeleteQuote);
+
 }
 
 function renderApp() {
@@ -439,9 +447,11 @@ function renderAppShell() {
   elements.positionSheetShell.classList.toggle("is-open", state.positionSheetOpen);
   elements.sizeSheetShell.classList.toggle("is-open", state.sizeSheetOpen);
   elements.positionSizesSheetShell.classList.toggle("is-open", state.positionSizesSheetOpen);
+  elements.quoteDeleteDialogShell.classList.toggle("is-open", state.quoteDeleteDialogOpen);
 
   const uiLocked =
     state.drawerOpen ||
+    state.quoteDeleteDialogOpen ||
     state.garmentSheetOpen ||
     state.printSheetOpen ||
     state.quoteSheetOpen ||
@@ -803,13 +813,12 @@ function renderSavedQuotes() {
       const isActive = quote.id === state.activeQuoteId;
 
       return `
-        <article class="summary-card saved-quote-card">
+        <article class="summary-card saved-quote-card ${isActive ? "is-current" : ""}">
           <button class="saved-quote-card-main" data-open-quote="${quote.id}" type="button">
             <div class="saved-quote-head">
               <div class="saved-quote-title-block">
                 <div class="saved-quote-title-row">
                   <strong>${escapeHtml(getQuoteDisplayName(quote.name))}</strong>
-                  ${isActive ? '<span class="status-pill">Current</span>' : ""}
                 </div>
                 <span class="saved-quote-date">${escapeHtml(
                   formatEditedDateTime(quote.updatedAt) || "Edited now",
@@ -1326,6 +1335,35 @@ function closeDrawer() {
   renderAppShell();
 }
 
+function openQuoteDeleteDialog(quoteId) {
+  const quote = state.quotes.find((item) => item.id === quoteId);
+  if (!quote) {
+    return;
+  }
+
+  state.pendingDeleteQuoteId = quoteId;
+  state.quoteDeleteDialogOpen = true;
+  state.drawerOpen = false;
+  renderAppShell();
+}
+
+function closeQuoteDeleteDialog() {
+  state.quoteDeleteDialogOpen = false;
+  state.pendingDeleteQuoteId = "";
+  renderAppShell();
+}
+
+function confirmDeleteQuote() {
+  if (!state.pendingDeleteQuoteId) {
+    closeQuoteDeleteDialog();
+    return;
+  }
+
+  const quoteId = state.pendingDeleteQuoteId;
+  closeQuoteDeleteDialog();
+  deleteQuote(quoteId);
+}
+
 function openGarmentSheet() {
   if (!canBuildQuoteItems()) {
     return;
@@ -1690,15 +1728,9 @@ function handleSavedQuotesListClick(event) {
     return;
   }
 
-  const duplicateButton = event.target.closest("[data-duplicate-quote]");
-  if (duplicateButton) {
-    duplicateQuote(duplicateButton.dataset.duplicateQuote);
-    return;
-  }
-
   const deleteButton = event.target.closest("[data-delete-quote]");
   if (deleteButton) {
-    deleteQuote(deleteButton.dataset.deleteQuote);
+    openQuoteDeleteDialog(deleteButton.dataset.deleteQuote);
   }
 }
 
@@ -2129,10 +2161,6 @@ function duplicateQuote(quoteId) {
 function deleteQuote(quoteId) {
   const quote = state.quotes.find((item) => item.id === quoteId);
   if (!quote) {
-    return;
-  }
-
-  if (!window.confirm(`Delete "${getQuoteDisplayName(quote.name)}"?`)) {
     return;
   }
 
