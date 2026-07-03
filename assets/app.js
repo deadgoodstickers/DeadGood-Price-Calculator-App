@@ -83,6 +83,7 @@ const state = {
   quoteGarmentSearch: "",
   garmentLibrarySearch: "",
   garmentEditorId: "",
+  garmentEditorOpen: false,
   positionEditorId: "",
   sizeEditorId: "",
   deferredPrompt: null,
@@ -199,6 +200,9 @@ const elements = {
   loadDemoGarmentsButton: document.querySelector("#loadDemoGarmentsButton"),
   garmentLibraryList: document.querySelector("#garmentLibraryList"),
   garmentLibraryEmpty: document.querySelector("#garmentLibraryEmpty"),
+  toggleGarmentEditorButton: document.querySelector("#toggleGarmentEditorButton"),
+  garmentEditorPanel: document.querySelector("#garmentEditorPanel"),
+  garmentEditorTitle: document.querySelector("#garmentEditorTitle"),
   newGarmentCategory: document.querySelector("#newGarmentCategory"),
   addGarmentCategoryButton: document.querySelector("#addGarmentCategoryButton"),
   garmentCategoryList: document.querySelector("#garmentCategoryList"),
@@ -365,6 +369,7 @@ function bindEvents() {
     renderGarmentLibrary();
   });
   elements.loadDemoGarmentsButton.addEventListener("click", loadDemoGarments);
+  elements.toggleGarmentEditorButton.addEventListener("click", toggleGarmentEditorPanel);
   elements.garmentLibraryList.addEventListener("click", handleGarmentLibraryClick);
   elements.garmentLibraryList.addEventListener("toggle", handleGarmentLibraryToggle, true);
   elements.addGarmentCategoryButton.addEventListener("click", addGarmentCategory);
@@ -799,22 +804,31 @@ function renderSavedQuotes() {
 
       return `
         <article class="summary-card saved-quote-card">
-          <button class="quick-card" data-open-quote="${quote.id}" type="button">
+          <button class="saved-quote-card-main" data-open-quote="${quote.id}" type="button">
             <div class="saved-quote-head">
-              <div>
-                <strong>${escapeHtml(getQuoteDisplayName(quote.name))}</strong>
-                <span>${escapeHtml(formatEditedDateTime(quote.updatedAt) || "Edited now")}</span>
+              <div class="saved-quote-title-block">
+                <div class="saved-quote-title-row">
+                  <strong>${escapeHtml(getQuoteDisplayName(quote.name))}</strong>
+                  ${isActive ? '<span class="status-pill">Current</span>' : ""}
+                </div>
+                <span class="saved-quote-date">${escapeHtml(
+                  formatEditedDateTime(quote.updatedAt) || "Edited now",
+                )}</span>
               </div>
               <div class="saved-quote-total">
                 <span>Total</span>
                 <strong>${formatCurrency(totals.grandTotal)}</strong>
               </div>
             </div>
-            <div class="saved-quote-meta-row">
-              ${isActive ? '<span class="status-pill">Current</span>' : ""}
-              <span class="saved-quote-meta">${formatGarmentCount(
-                totals.quoteQuantity,
-              )} · ${formatProductTypeCount(totals.itemCount)}</span>
+            <div class="saved-quote-stats">
+              <div class="saved-quote-stat">
+                <span>Garments</span>
+                <strong>${formatGarmentCount(totals.quoteQuantity)}</strong>
+              </div>
+              <div class="saved-quote-stat">
+                <span>Product types</span>
+                <strong>${formatProductTypeCount(totals.itemCount)}</strong>
+              </div>
             </div>
           </button>
 
@@ -823,22 +837,11 @@ function renderSavedQuotes() {
               Open
             </button>
             <button
-              class="ghost-button compact-button square-button"
-              data-duplicate-quote="${quote.id}"
-              type="button"
-              aria-label="Duplicate quote"
-              title="Duplicate quote"
-            >
-              ⧉
-            </button>
-            <button
-              class="ghost-button compact-button square-button"
+              class="ghost-button compact-button"
               data-delete-quote="${quote.id}"
               type="button"
-              aria-label="Delete quote"
-              title="Delete quote"
             >
-              ✕
+              Delete
             </button>
           </div>
         </article>
@@ -898,8 +901,8 @@ function renderGarmentSearchResults() {
 function renderGarmentCreatorState() {
   elements.garmentCreatorPanel.hidden = !state.garmentCreatorOpen;
   elements.toggleGarmentCreatorButton.textContent = state.garmentCreatorOpen
-    ? "Hide new garment form"
-    : "Add a new garment";
+    ? "Hide New Garment Form"
+    : "Add New Garment";
 }
 
 function renderGarmentSheetMeta() {
@@ -1053,6 +1056,17 @@ function renderGarmentCategoryManager() {
 }
 
 function renderGarmentEditorState() {
+  const isEditing = Boolean(state.garmentEditorId);
+  elements.garmentEditorPanel.hidden = !state.garmentEditorOpen;
+  elements.garmentEditorPanel.classList.toggle("is-open", state.garmentEditorOpen);
+  elements.toggleGarmentEditorButton.setAttribute(
+    "aria-expanded",
+    String(state.garmentEditorOpen),
+  );
+  elements.toggleGarmentEditorButton.textContent = state.garmentEditorOpen
+    ? "Hide Garment Editor"
+    : "Add New Garment";
+  elements.garmentEditorTitle.textContent = isEditing ? "Edit Garment" : "New Garment";
   elements.garmentEditorDeleteButton.disabled = !state.garmentEditorId;
 }
 
@@ -1697,6 +1711,7 @@ function handleGarmentLibraryClick(event) {
     }
 
     state.garmentEditorId = garment.id;
+    state.garmentEditorOpen = true;
     syncGarmentEditor(garment);
     renderGarmentEditorState();
     return;
@@ -2173,7 +2188,19 @@ function deleteGarmentFromEditor() {
 
 function clearGarmentEditor() {
   state.garmentEditorId = "";
+  state.garmentEditorOpen = false;
   syncGarmentEditor();
+  renderGarmentEditorState();
+}
+
+function toggleGarmentEditorPanel() {
+  state.garmentEditorOpen = !state.garmentEditorOpen;
+
+  if (!state.garmentEditorOpen) {
+    state.garmentEditorId = "";
+    syncGarmentEditor();
+  }
+
   renderGarmentEditorState();
 }
 
@@ -2505,6 +2532,7 @@ function loadDemoGarments() {
 
   state.garments = nextGarments;
   persist(STORAGE_KEYS.garments, state.garments);
+  state.garmentEditorOpen = false;
   syncGarmentEditor(state.garments.find((garment) => garment.id === state.garmentEditorId) || null);
   renderGarmentEditorState();
   renderGarmentLibrary();

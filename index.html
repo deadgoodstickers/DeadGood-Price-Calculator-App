@@ -127,25 +127,62 @@
       ></button>
       <aside class="drawer-panel" aria-label="Navigation drawer">
         <div class="drawer-header">
-          <p class="section-kicker">Menu</p>
-          <h2>DeadGood Printing</h2>
+          <img
+            class="drawer-brand-logo"
+            src="assets/icons/deadgood-logo.png"
+            alt="DeadGood Printing"
+          />
         </div>
 
         <nav class="drawer-nav" aria-label="Primary">
           <button class="drawer-link is-active" data-page="quote" type="button">
-            Quote
+            <span class="drawer-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5h16v14H4z"></path>
+                <path d="M8 9h8"></path>
+                <path d="M8 13h5"></path>
+              </svg>
+            </span>
+            <span class="drawer-link-label">Quote</span>
           </button>
           <button class="drawer-link" data-page="saved-quotes" type="button">
-            Saved Quotes
+            <span class="drawer-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 3h8l4 4v14H7z"></path>
+                <path d="M15 3v5h5"></path>
+                <path d="M10 12h6"></path>
+                <path d="M10 16h5"></path>
+              </svg>
+            </span>
+            <span class="drawer-link-label">Saved Quotes</span>
           </button>
           <button class="drawer-link" data-page="garments" type="button">
-            Garments
+            <span class="drawer-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 5 7 8 4 9.5 6 14v5h12v-5l2-4.5L17 8l-2-3z"></path>
+                <path d="M9 5h6"></path>
+              </svg>
+            </span>
+            <span class="drawer-link-label">Garments</span>
           </button>
           <button class="drawer-link" data-page="pricing" type="button">
-            Print Pricing
+            <span class="drawer-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 8V4h10v4"></path>
+                <rect x="5" y="8" width="14" height="8" rx="2"></rect>
+                <path d="M8 16h8v4H8z"></path>
+              </svg>
+            </span>
+            <span class="drawer-link-label">Print Pricing</span>
           </button>
           <button class="drawer-link" data-page="settings" type="button">
-            Settings
+            <span class="drawer-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.08V21a2 2 0 1 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87-.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.08-.4H2.9a2 2 0 1 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.08V2.9a2 2 0 1 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.28.3.48.64.6 1 .1.32.13.66.1 1h.08a2 2 0 1 1 0 4h-.08a1.7 1.7 0 0 0-.7 0z"></path>
+              </svg>
+            </span>
+            <span class="drawer-link-label">Settings</span>
           </button>
         </nav>
 
@@ -184,7 +221,7 @@
             id="quoteGarmentSearch"
             type="search"
             autocomplete="off"
-            placeholder="Search garments"
+            placeholder="Search garments..."
           />
         </label>
 
@@ -201,7 +238,7 @@
           <div class="form-grid">
             <label class="field">
               <span>Name</span>
-              <input id="quoteGarmentName" type="text" placeholder="AT003 tee" />
+              <input id="quoteGarmentName" type="text" placeholder="Garment name" />
             </label>
             <label class="field">
               <span>Category</span>
@@ -209,11 +246,11 @@
             </label>
             <label class="field">
               <span>Brand</span>
-              <input id="quoteGarmentBrand" type="text" placeholder="AWDis" />
+              <input id="quoteGarmentBrand" type="text" placeholder="Brand (optional)" />
             </label>
             <label class="field">
               <span>Code</span>
-              <input id="quoteGarmentCode" type="text" placeholder="AT003" />
+              <input id="quoteGarmentCode" type="text" placeholder="Product code" />
             </label>
             <label class="field">
               <span>Cost</span>
@@ -236,7 +273,7 @@
             <textarea
               id="quoteGarmentNotes"
               rows="3"
-              placeholder="Optional notes"
+              placeholder="Internal notes (optional)"
             ></textarea>
           </label>
 
@@ -715,81 +752,81 @@
         </section>
 
         <section class="page" id="page-saved-quotes" data-page="saved-quotes" hidden>
-          <div class="page-grid">
-            <article class="card stack-md">
-              <div class="section-head">
-                <div>
-                  <h2>Saved quotes</h2>
+          <div class="page-stack">
+            <div class="page-header">
+              <div class="page-title-copy">
+                <div class="heading-with-icon">
+                  <span class="inline-icon accent-text" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M7 3h8l4 4v14H7z"></path>
+                      <path d="M15 3v5h5"></path>
+                      <path d="M10 12h6"></path>
+                      <path d="M10 16h5"></path>
+                    </svg>
+                  </span>
+                  <h2>Saved Quotes</h2>
                 </div>
-                <button class="primary-button compact-button" id="newQuotePageButton" type="button">
-                  New quote
-                </button>
               </div>
+              <button class="primary-button compact-button" id="newQuotePageButton" type="button">
+                New Quote
+              </button>
+            </div>
 
-              <div class="stack-sm" id="savedQuotesList"></div>
-              <p class="empty-copy" id="savedQuotesEmpty">No saved quotes yet.</p>
-            </article>
+            <div class="stack-sm" id="savedQuotesList"></div>
+            <p class="empty-copy" id="savedQuotesEmpty">No saved quotes yet.</p>
           </div>
         </section>
 
         <section class="page" id="page-garments" data-page="garments" hidden>
-          <div class="page-grid management-grid">
-            <article class="card stack-md">
-              <div class="section-head">
-                <div>
-                  <h2>Saved garments</h2>
+          <div class="page-stack">
+            <div class="page-header">
+              <div class="page-title-copy">
+                <div class="heading-with-icon">
+                  <span class="inline-icon accent-text" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 5 7 8 4 9.5 6 14v5h12v-5l2-4.5L17 8l-2-3z"></path>
+                      <path d="M9 5h6"></path>
+                    </svg>
+                  </span>
+                  <h2>Saved Garments</h2>
                 </div>
               </div>
+            </div>
 
-              <div class="library-search">
-                <input
-                  id="garmentLibrarySearch"
-                  type="search"
-                  autocomplete="off"
-                  placeholder="Search garments"
-                />
-              </div>
+            <div class="library-search standalone-search">
+              <input
+                id="garmentLibrarySearch"
+                type="search"
+                autocomplete="off"
+                placeholder="Search garments..."
+              />
+            </div>
 
-              <div class="inline-actions">
+            <div class="garment-toolbar">
+              <button
+                class="primary-button compact-button"
+                id="toggleGarmentEditorButton"
+                type="button"
+                aria-expanded="false"
+              >
+                Add New Garment
+              </button>
+              <div class="inline-actions garment-toolbar-side">
                 <button
                   class="secondary-button compact-button"
                   id="loadDemoGarmentsButton"
                   type="button"
                 >
-                  Load demo garments
+                  Load Demo Garments
                 </button>
                 <p class="helper-copy compact-note">Adds missing test garments only.</p>
               </div>
+            </div>
 
-              <div class="stack-sm" id="garmentLibraryList"></div>
-              <p class="empty-copy" id="garmentLibraryEmpty">No garments saved.</p>
-            </article>
-
-            <article class="card stack-md">
+            <article class="card stack-md page-span" id="garmentEditorPanel" hidden>
               <div class="section-head">
                 <div>
-                  <h2>Categories</h2>
-                </div>
-              </div>
-
-              <div class="inline-entry category-entry-row">
-                <input id="newGarmentCategory" type="text" placeholder="Add category" />
-                <button
-                  class="secondary-button compact-button"
-                  id="addGarmentCategoryButton"
-                  type="button"
-                >
-                  Add
-                </button>
-              </div>
-
-              <div class="stack-sm" id="garmentCategoryList"></div>
-            </article>
-
-            <article class="card stack-md page-span">
-              <div class="section-head">
-                <div>
-                  <h2>Garment details</h2>
+                  <h2 id="garmentEditorTitle">New Garment</h2>
                 </div>
                 <button
                   class="ghost-button compact-button square-button"
@@ -804,7 +841,7 @@
               <div class="form-grid">
                 <label class="field">
                   <span>Name</span>
-                  <input id="garmentEditorName" type="text" placeholder="Heavy hoodie" />
+                  <input id="garmentEditorName" type="text" placeholder="Garment name" />
                 </label>
                 <label class="field">
                   <span>Category</span>
@@ -812,11 +849,11 @@
                 </label>
                 <label class="field">
                   <span>Brand</span>
-                  <input id="garmentEditorBrand" type="text" placeholder="AWDis" />
+                  <input id="garmentEditorBrand" type="text" placeholder="Brand (optional)" />
                 </label>
                 <label class="field">
                   <span>Code</span>
-                  <input id="garmentEditorCode" type="text" placeholder="JH001" />
+                  <input id="garmentEditorCode" type="text" placeholder="Product code" />
                 </label>
                 <label class="field">
                   <span>Cost</span>
@@ -839,7 +876,7 @@
                 <textarea
                   id="garmentEditorNotes"
                   rows="4"
-                  placeholder="Optional notes"
+                  placeholder="Internal notes (optional)"
                 ></textarea>
               </label>
 
@@ -863,6 +900,43 @@
                 </button>
               </div>
             </article>
+
+            <div class="page-section-label">
+              <span class="section-label">Garment Library</span>
+            </div>
+
+            <div class="stack-sm" id="garmentLibraryList"></div>
+            <p class="empty-copy" id="garmentLibraryEmpty">No garments saved.</p>
+
+            <details class="manager-details admin-panel">
+              <summary>
+                <div class="collapsible-summary-copy">
+                  <span class="inline-icon accent-text" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 7h16"></path>
+                      <path d="M7 12h10"></path>
+                      <path d="M10 17h4"></path>
+                    </svg>
+                  </span>
+                  <strong>Manage Categories</strong>
+                </div>
+              </summary>
+
+              <div class="manager-detail-body stack-md">
+                <div class="inline-entry category-entry-row">
+                  <input id="newGarmentCategory" type="text" placeholder="Add category" />
+                  <button
+                    class="secondary-button compact-button"
+                    id="addGarmentCategoryButton"
+                    type="button"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <div class="stack-sm" id="garmentCategoryList"></div>
+              </div>
+            </details>
           </div>
         </section>
 
