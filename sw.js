@@ -1,9 +1,9 @@
-const CACHE_NAME = "deadgood-quote-engine-v3-17";
+const CACHE_NAME = "deadgood-quote-engine-v3-18";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./assets/styles.css",
-  "./assets/styles.css?v=rc12",
+  "./assets/styles.css?v=rc13",
   "./assets/app.js",
   "./assets/app.js?v=rc12",
   "./assets/config.js",
