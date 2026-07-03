@@ -1,16 +1,29 @@
-const CACHE_NAME = "deadgood-quote-engine-v3-12";
+const CACHE_NAME = "deadgood-quote-engine-v3-15";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./assets/styles.css",
+  "./assets/styles.css?v=rc9",
   "./assets/app.js",
+  "./assets/app.js?v=rc9",
   "./assets/config.js",
+  "./assets/config.js?v=rc9",
   "./assets/storage.js",
+  "./assets/storage.js?v=rc9",
   "./assets/calculations.js",
+  "./assets/calculations.js?v=rc9",
   "./assets/utils.js",
+  "./assets/utils.js?v=rc9",
   "./manifest.webmanifest",
-  "./assets/icons/icon.svg",
-  "./assets/icons/icon-maskable.svg",
+  "./manifest.webmanifest?v=brand-3",
+  "./favicon.ico",
+  "./favicon-32x32.png",
+  "./favicon-16x16.png",
+  "./apple-touch-icon.png",
+  "./assets/icons/deadgood-logo.png",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/maskable-icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {

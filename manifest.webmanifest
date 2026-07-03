@@ -1,6 +1,6 @@
 {
-  "name": "DeadGood Quote Engine",
-  "short_name": "Quote Engine",
+  "name": "DeadGood Printing",
+  "short_name": "DeadGood Printing",
   "description": "Internal garment print quote calculator for DeadGood Printing.",
   "start_url": "./",
   "display": "standalone",
@@ -9,15 +9,21 @@
   "lang": "en-GB",
   "icons": [
     {
-      "src": "assets/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

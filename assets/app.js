@@ -10,7 +10,7 @@ import {
   lookupPrintPrice,
   resolveDeliveryBoxes,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc7";
+} from "./calculations.js?v=rc9";
 import {
   createDefaultQuoteDelivery,
   createEmptyQuoteDraft,
@@ -18,7 +18,7 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc7";
+} from "./config.js?v=rc9";
 import {
   hydrateGarments,
   hydratePricing,
@@ -27,7 +27,7 @@ import {
   hydrateQuoteItems,
   loadAppState,
   persist,
-} from "./storage.js?v=rc7";
+} from "./storage.js?v=rc9";
 import {
   deepClone,
   escapeHtml,
@@ -38,7 +38,7 @@ import {
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc7";
+} from "./utils.js?v=rc9";
 
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
@@ -89,7 +89,9 @@ const state = {
 };
 
 const elements = {
+  root: document.documentElement,
   body: document.body,
+  launchScreen: document.querySelector("#launchScreen"),
   drawerShell: document.querySelector("#drawerShell"),
   drawerToggleButton: document.querySelector("#drawerToggleButton"),
   drawerScrim: document.querySelector("#drawerScrim"),
@@ -253,6 +255,32 @@ function initialize() {
   renderApp();
   registerServiceWorker();
   setupInstallPrompt();
+  completeLaunchExperience();
+}
+
+function completeLaunchExperience() {
+  const launchStartedAt = Number(globalThis.__deadgoodLaunchStarted || performance.now());
+  const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const minimumDuration = reduceMotion ? 120 : 860;
+  const elapsed = performance.now() - launchStartedAt;
+  const remainingDelay = Math.max(0, minimumDuration - elapsed);
+
+  window.setTimeout(() => {
+    elements.root.classList.remove("app-launching");
+    elements.root.classList.add("app-ready");
+
+    if (!elements.launchScreen) {
+      return;
+    }
+
+    const cleanup = () => {
+      elements.launchScreen?.remove();
+      elements.launchScreen = null;
+    };
+
+    elements.launchScreen.addEventListener("transitionend", cleanup, { once: true });
+    window.setTimeout(cleanup, reduceMotion ? 180 : 420);
+  }, remainingDelay);
 }
 
 function bindEvents() {

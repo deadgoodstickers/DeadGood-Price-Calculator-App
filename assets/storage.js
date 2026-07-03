@@ -12,13 +12,13 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc7";
+} from "./config.js?v=rc9";
 import {
   applyQuotePrintPricing,
   calculateGarmentSellPrice,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc7";
-import { deepClone, formatDimensions, generateId, sanitiseNumber, slugify } from "./utils.js?v=rc7";
+} from "./calculations.js?v=rc9";
+import { deepClone, formatDimensions, generateId, sanitiseNumber, slugify } from "./utils.js?v=rc9";
 
 export function loadStored(key, fallback) {
   try {
