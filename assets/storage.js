@@ -12,14 +12,14 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc14";
-import { calculateGarmentSellPrice } from "./calculations.js?v=rc14";
+} from "./config.js?v=rc15";
+import { calculateGarmentSellPrice } from "./calculations.js?v=rc15";
 import {
   deepClone,
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc14";
+} from "./utils.js?v=rc15";
 
 export function loadStored(key, fallback) {
   try {

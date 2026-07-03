@@ -49,8 +49,8 @@
         opacity: 1;
         visibility: visible;
         transition:
-          opacity 320ms ease,
-          visibility 320ms ease;
+          opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 320ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .launch-logo {
@@ -58,9 +58,9 @@
         width: min(62vw, 272px);
         height: auto;
         opacity: 0;
-        transform: scale(0.96);
+        transform: scale(0.97);
         transform-origin: center;
-        animation: launchLogoIn 820ms cubic-bezier(0.22, 1, 0.36, 1) 40ms forwards;
+        animation: launchLogoIn 840ms cubic-bezier(0.22, 1, 0.36, 1) 40ms forwards;
       }
 
       html.app-launching .grid-backdrop,
@@ -78,7 +78,7 @@
       @keyframes launchLogoIn {
         from {
           opacity: 0;
-          transform: scale(0.96);
+          transform: scale(0.97);
         }
 
         to {
@@ -105,7 +105,7 @@
     <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
     <link rel="preload" as="image" href="assets/icons/deadgood-logo.png" />
-    <link rel="stylesheet" href="assets/styles.css?v=rc14" />
+    <link rel="stylesheet" href="assets/styles.css?v=rc15" />
     <title>DeadGood Printing</title>
   </head>
   <body>
@@ -1144,6 +1144,6 @@
       </button>
     </aside>
 
-    <script type="module" src="assets/app.js?v=rc14"></script>
+    <script type="module" src="assets/app.js?v=rc15"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
-import { QUANTITY_OPTIONS } from "./config.js?v=rc14";
-import { formatDimensions, roundMoney, sanitiseNumber } from "./utils.js?v=rc14";
+import { QUANTITY_OPTIONS } from "./config.js?v=rc15";
+import { formatDimensions, roundMoney, sanitiseNumber } from "./utils.js?v=rc15";
 
 export function calculateGarmentBreakdown(costPrice, settings) {
   const baseCost = roundMoney(sanitiseNumber(costPrice, 0));

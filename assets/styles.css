@@ -25,6 +25,18 @@
   --font-body: "Avenir Next", "Segoe UI", sans-serif;
   --font-display: "Avenir Next Condensed", "Franklin Gothic Demi Cond", sans-serif;
   --content-width: 980px;
+  --motion-duration-fast: 180ms;
+  --motion-duration-medium: 220ms;
+  --motion-duration-sheet: 260ms;
+  --motion-duration-launch: 840ms;
+  --motion-duration-slow: 320ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-press-scale: 0.98;
+  --motion-card-press-scale: 0.995;
+  --motion-lift-translate: -1px;
+  --motion-fade-distance: 8px;
+  --motion-sheet-distance: 18px;
+  --motion-overlay-opacity: 0.54;
 }
 
 * {
@@ -53,8 +65,8 @@ body {
   opacity: 1;
   visibility: visible;
   transition:
-    opacity 320ms ease,
-    visibility 320ms ease;
+    opacity var(--motion-duration-slow) var(--motion-ease),
+    visibility var(--motion-duration-slow) var(--motion-ease);
 }
 
 .launch-logo {
@@ -62,15 +74,16 @@ body {
   width: min(62vw, 272px);
   height: auto;
   opacity: 0;
-  transform: scale(0.96);
+  transform: scale(0.97);
   transform-origin: center;
-  animation: launchLogoIn 820ms cubic-bezier(0.22, 1, 0.36, 1) 40ms forwards;
+  will-change: transform, opacity;
+  animation: launchLogoIn var(--motion-duration-launch) var(--motion-ease) 40ms forwards;
 }
 
 @keyframes launchLogoIn {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
 
   to {
@@ -82,12 +95,70 @@ body {
 @keyframes panelReveal {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(var(--motion-fade-distance));
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes motionFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--motion-fade-distance), 0) scale(0.995);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes motionDrawerItemIn {
+  from {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motionValueFlash {
+  0% {
+    opacity: 0.7;
+    transform: translate3d(0, 2px, 0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motionItemExit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.985);
+  }
+}
+
+@keyframes motionListRefresh {
+  0% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 1;
   }
 }
 
@@ -124,19 +195,41 @@ button {
 .grid-backdrop,
 .app-shell,
 .quote-bar {
-  transition: opacity 320ms ease;
+  transition:
+    opacity var(--motion-duration-slow) var(--motion-ease),
+    transform var(--motion-duration-slow) var(--motion-ease);
 }
 
 html.app-launching .grid-backdrop,
 html.app-launching .app-shell,
 html.app-launching .quote-bar {
   opacity: 0;
+  transform: translate3d(0, 10px, 0);
 }
 
 html.app-ready .launch-screen {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+.motion-fade-in,
+.motion-item-enter {
+  animation: motionFadeSlideIn var(--motion-duration-medium) var(--motion-ease);
+}
+
+.motion-value-updating {
+  animation: motionValueFlash var(--motion-duration-fast) var(--motion-ease);
+}
+
+.motion-list-refreshing {
+  animation: motionListRefresh var(--motion-duration-fast) var(--motion-ease);
+}
+
+.motion-item-exit {
+  pointer-events: none;
+  overflow: hidden;
+  animation: motionItemExit var(--motion-duration-medium) var(--motion-ease) forwards;
 }
 
 .app-shell {
@@ -298,6 +391,24 @@ h3 {
   border: 1px solid var(--border);
   background: rgba(21, 21, 24, 0.96);
   box-shadow: var(--shadow);
+}
+
+.card,
+.summary-card,
+.mini-print-card,
+.price-entry-card,
+.saved-quote-card,
+.saved-quote-stat,
+.library-row-shell,
+.manager-details,
+.pricing-card,
+.quote-bar {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease),
+    background-color var(--motion-duration-fast) var(--motion-ease),
+    box-shadow var(--motion-duration-fast) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-fast) var(--motion-ease);
 }
 
 .card,
@@ -593,8 +704,8 @@ h3 {
   pointer-events: none;
   transform: translateY(calc(100% + 12px));
   transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+    opacity var(--motion-duration-medium) var(--motion-ease),
+    transform var(--motion-duration-medium) var(--motion-ease);
 }
 
 .quote-bar.is-visible {
@@ -624,15 +735,21 @@ h3 {
 .secondary-button,
 .ghost-button,
 .subtle-icon-button,
-.disclosure-toggle {
+.disclosure-toggle,
+.saved-quote-card-main,
+.quick-card,
+.empty-launch-card,
+.library-row-button {
   border: 1px solid transparent;
   border-radius: var(--radius-md);
+  will-change: transform, opacity, background-color, border-color;
   transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease,
-    color 140ms ease,
-    opacity 140ms ease;
+    transform var(--motion-duration-fast) var(--motion-ease),
+    border-color var(--motion-duration-fast) var(--motion-ease),
+    background-color var(--motion-duration-fast) var(--motion-ease),
+    color var(--motion-duration-fast) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    box-shadow var(--motion-duration-fast) var(--motion-ease);
 }
 
 .icon-button,
@@ -834,10 +951,44 @@ h3 {
   isolation: isolate;
 }
 
+.drawer-link,
+.chip-button,
+.size-chip,
+.primary-button,
+.secondary-button,
+.ghost-button,
+.icon-button,
+.subtle-icon-button,
+.saved-quote-card-main,
+.quick-card,
+.empty-launch-card,
+.library-row-button,
+.manager-nav-row,
+.disclosure-toggle {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
 .drawer-link.is-active span,
 .drawer-link.is-active .drawer-link-icon,
 .size-chip.is-active span {
   color: #17100b;
+}
+
+.drawer-link:hover,
+.chip-button:hover,
+.size-chip:hover,
+.primary-button:hover,
+.secondary-button:hover,
+.ghost-button:hover,
+.icon-button:hover,
+.subtle-icon-button:hover,
+.saved-quote-card-main:hover,
+.quick-card:hover,
+.empty-launch-card:hover,
+.library-row-button:hover,
+.manager-nav-row:hover,
+.disclosure-toggle:hover {
+  border-color: var(--border-strong);
 }
 
 .primary-button:active,
@@ -852,8 +1003,20 @@ h3 {
 .saved-quote-card-main:active,
 .quick-card:active,
 .empty-launch-card:active,
+.library-row-button:active,
 .disclosure-toggle:active {
-  transform: translateY(1px);
+  opacity: 0.96;
+  transform: translate3d(0, 0, 0) scale(var(--motion-press-scale));
+}
+
+.saved-quote-card-main:active,
+.quick-card:active,
+.empty-launch-card:active,
+.library-row-button:active,
+.manager-nav-row:active,
+.disclosure-toggle:active {
+  transform: translate3d(0, 0, 0) scale(var(--motion-card-press-scale));
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 button:disabled {
@@ -907,6 +1070,13 @@ select {
   background: var(--surface-3);
   color: var(--text);
   padding: 0.8rem 0.9rem;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease),
+    background-color var(--motion-duration-fast) var(--motion-ease),
+    color var(--motion-duration-fast) var(--motion-ease),
+    outline-color var(--motion-duration-fast) var(--motion-ease),
+    box-shadow var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-fast) var(--motion-ease);
 }
 
 textarea {
@@ -943,6 +1113,13 @@ select:focus,
 .disclosure-toggle:focus {
   outline: 2px solid rgba(255, 190, 60, 0.55);
   outline-offset: 2px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(255, 200, 74, 0.42);
+  background: rgba(19, 19, 23, 0.98);
 }
 
 .currency-input,
@@ -1073,9 +1250,9 @@ select:focus,
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, var(--motion-overlay-opacity));
   opacity: 0;
-  transition: opacity 180ms ease;
+  transition: opacity var(--motion-duration-medium) var(--motion-ease);
 }
 
 .drawer-panel,
@@ -1083,6 +1260,8 @@ select:focus,
   position: absolute;
   display: grid;
   gap: 0.8rem;
+  opacity: 0.98;
+  will-change: transform, opacity;
 }
 
 .drawer-panel {
@@ -1092,7 +1271,9 @@ select:focus,
   width: min(86vw, 336px);
   padding: 1.15rem 1rem 1rem;
   transform: translateX(-102%);
-  transition: transform 220ms ease;
+  transition:
+    transform var(--motion-duration-sheet) var(--motion-ease),
+    opacity var(--motion-duration-medium) var(--motion-ease);
   background: rgba(15, 15, 18, 0.98);
 }
 
@@ -1114,6 +1295,10 @@ select:focus,
 .drawer-nav {
   display: grid;
   gap: 0.68rem;
+}
+
+.drawer-link {
+  opacity: 0.92;
 }
 
 .drawer-footer {
@@ -1147,7 +1332,9 @@ select:focus,
   padding: 0.9rem;
   overflow-y: auto;
   transform: translateY(104%);
-  transition: transform 220ms ease;
+  transition:
+    transform var(--motion-duration-sheet) var(--motion-ease),
+    opacity var(--motion-duration-medium) var(--motion-ease);
   background: rgba(15, 15, 18, 0.98);
 }
 
@@ -1162,7 +1349,33 @@ select:focus,
 
 .drawer-shell.is-open .drawer-panel,
 .sheet-shell.is-open .sheet-panel {
+  opacity: 1;
   transform: translateX(0) translateY(0);
+}
+
+.drawer-shell.is-open .drawer-link {
+  opacity: 1;
+  animation: motionDrawerItemIn var(--motion-duration-medium) var(--motion-ease) both;
+}
+
+.drawer-shell.is-open .drawer-link:nth-child(1) {
+  animation-delay: 12ms;
+}
+
+.drawer-shell.is-open .drawer-link:nth-child(2) {
+  animation-delay: 22ms;
+}
+
+.drawer-shell.is-open .drawer-link:nth-child(3) {
+  animation-delay: 32ms;
+}
+
+.drawer-shell.is-open .drawer-link:nth-child(4) {
+  animation-delay: 42ms;
+}
+
+.drawer-shell.is-open .drawer-link:nth-child(5) {
+  animation-delay: 52ms;
 }
 
 .sheet-list,
@@ -1201,6 +1414,26 @@ select:focus,
 .breakdown summary {
   cursor: pointer;
   color: var(--muted-strong);
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease);
+}
+
+.breakdown > :not(summary) {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translate3d(0, 4px, 0);
+  transition:
+    max-height var(--motion-duration-medium) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-medium) var(--motion-ease);
+}
+
+.breakdown[open] > :not(summary) {
+  max-height: 240px;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 .breakdown p {
@@ -1244,7 +1477,7 @@ select:focus,
 
 .disclosure-toggle .caret {
   color: var(--muted-strong);
-  transition: transform 160ms ease;
+  transition: transform var(--motion-duration-fast) var(--motion-ease);
 }
 
 .disclosure-toggle.is-open .caret {
@@ -1254,7 +1487,28 @@ select:focus,
 .disclosure-body {
   display: grid;
   gap: 0.55rem;
+  padding-top: 0;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(0, 4px, 0);
+  transition:
+    max-height var(--motion-duration-medium) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-medium) var(--motion-ease),
+    padding-top var(--motion-duration-medium) var(--motion-ease),
+    visibility var(--motion-duration-fast) var(--motion-ease);
+}
+
+.picker-category-row.is-open + .disclosure-body {
   padding-top: 0.45rem;
+  opacity: 1;
+  max-height: 960px;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
 }
 
 .garment-sheet-panel {
@@ -1479,7 +1733,16 @@ select:focus,
 }
 
 .manager-detail-body {
-  padding: 0 0.8rem 0.8rem;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translate3d(0, 4px, 0);
+  padding: 0 0.8rem 0;
+  transition:
+    max-height var(--motion-duration-medium) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-medium) var(--motion-ease),
+    padding var(--motion-duration-medium) var(--motion-ease);
 }
 
 .pricing-card {
@@ -1507,7 +1770,16 @@ select:focus,
 
 .pricing-card-body {
   gap: 0.65rem;
-  padding: 0 0.8rem 0.8rem;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translate3d(0, 4px, 0);
+  padding: 0 0.8rem 0;
+  transition:
+    max-height var(--motion-duration-medium) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease),
+    transform var(--motion-duration-medium) var(--motion-ease),
+    padding var(--motion-duration-medium) var(--motion-ease);
 }
 
 .manager-details summary::after,
@@ -1517,7 +1789,7 @@ select:focus,
   font-size: 1.25rem;
   line-height: 1;
   transform: rotate(0deg);
-  transition: transform 160ms ease;
+  transition: transform var(--motion-duration-fast) var(--motion-ease);
 }
 
 .manager-details[open] > summary::after,
@@ -1528,6 +1800,14 @@ select:focus,
 .manager-details[open],
 .pricing-card[open] {
   border-color: var(--border-strong);
+}
+
+.manager-details[open] .manager-detail-body,
+.pricing-card[open] .pricing-card-body {
+  max-height: 1200px;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  padding-bottom: 0.8rem;
 }
 
 .quote-totals-section {
@@ -1706,14 +1986,15 @@ select:focus,
   font-size: 0.92rem;
   line-height: 1;
   flex: 0 0 auto;
+  transition: transform var(--motion-duration-fast) var(--motion-ease);
 }
 
 .admin-panel[open] > summary::before {
-  content: "▲";
+  transform: rotate(180deg);
 }
 
 #garmentEditorPanel.is-open {
-  animation: panelReveal 180ms ease;
+  animation: panelReveal var(--motion-duration-medium) var(--motion-ease);
 }
 
 .dialog-shell {
@@ -1735,8 +2016,8 @@ select:focus,
   box-shadow: var(--shadow);
   opacity: 0;
   transition:
-    transform 180ms ease,
-    opacity 180ms ease;
+    transform var(--motion-duration-sheet) var(--motion-ease),
+    opacity var(--motion-duration-medium) var(--motion-ease);
 }
 
 .dialog-shell.is-open .dialog-panel {
@@ -1758,15 +2039,15 @@ select:focus,
   color: #ffd1d1;
   font-weight: 700;
   transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease,
-    color 140ms ease,
-    opacity 140ms ease;
+    transform var(--motion-duration-fast) var(--motion-ease),
+    border-color var(--motion-duration-fast) var(--motion-ease),
+    background-color var(--motion-duration-fast) var(--motion-ease),
+    color var(--motion-duration-fast) var(--motion-ease),
+    opacity var(--motion-duration-fast) var(--motion-ease);
 }
 
 .danger-button:active {
-  transform: translateY(1px);
+  transform: translate3d(0, 0, 0) scale(var(--motion-press-scale));
 }
 
 .danger-button:focus {
@@ -2216,15 +2497,35 @@ select:focus,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .launch-screen,
   .grid-backdrop,
   .app-shell,
-  .quote-bar {
-    transition-duration: 120ms;
+  .quote-bar,
+  .drawer-panel,
+  .sheet-panel,
+  .dialog-panel,
+  .overlay-scrim {
+    transition-duration: 120ms !important;
   }
 
-  .launch-logo {
-    animation: none;
+  .launch-logo,
+  .motion-fade-in,
+  .motion-item-enter,
+  .motion-value-updating,
+  .motion-list-refreshing,
+  .motion-item-exit,
+  .drawer-shell.is-open .drawer-link,
+  #garmentEditorPanel.is-open {
+    animation: none !important;
     opacity: 1;
     transform: none;
   }

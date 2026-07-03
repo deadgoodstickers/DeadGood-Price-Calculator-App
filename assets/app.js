@@ -11,7 +11,7 @@ import {
   lookupPrintPrice,
   resolveDeliveryBoxes,
   resolveQuantityBracket,
-} from "./calculations.js?v=rc14";
+} from "./calculations.js?v=rc15";
 import {
   createDefaultQuoteDelivery,
   createEmptyQuoteDraft,
@@ -19,7 +19,7 @@ import {
   PAGES,
   QUANTITY_OPTIONS,
   STORAGE_KEYS,
-} from "./config.js?v=rc14";
+} from "./config.js?v=rc15";
 import {
   hydrateGarments,
   hydratePricing,
@@ -28,7 +28,7 @@ import {
   hydrateQuoteItems,
   loadAppState,
   persist,
-} from "./storage.js?v=rc14";
+} from "./storage.js?v=rc15";
 import {
   deepClone,
   escapeHtml,
@@ -39,7 +39,7 @@ import {
   generateId,
   sanitiseNumber,
   slugify,
-} from "./utils.js?v=rc14";
+} from "./utils.js?v=rc15";
 
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
@@ -92,6 +92,11 @@ const state = {
   positionEditorId: "",
   sizeEditorId: "",
   deferredPrompt: null,
+  motion: {
+    recentQuoteItemId: "",
+    recentDraftPrintId: "",
+    recentQuoteId: "",
+  },
 };
 
 const elements = {
@@ -295,6 +300,67 @@ function completeLaunchExperience() {
   }, remainingDelay);
 }
 
+function prefersReducedMotion() {
+  return Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+}
+
+function replayMotionClass(element, className, duration = 240) {
+  if (!element || prefersReducedMotion()) {
+    return;
+  }
+
+  if (element.__deadgoodMotionTimer) {
+    window.clearTimeout(element.__deadgoodMotionTimer);
+  }
+
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+  element.__deadgoodMotionTimer = window.setTimeout(() => {
+    element.classList.remove(className);
+  }, duration);
+}
+
+function setAnimatedText(element, nextValue) {
+  if (!element) {
+    return;
+  }
+
+  const value = String(nextValue);
+  if (element.textContent !== value) {
+    element.textContent = value;
+    replayMotionClass(element, "motion-value-updating", 220);
+    return;
+  }
+
+  element.textContent = value;
+}
+
+function refreshListMotion(element) {
+  replayMotionClass(element, "motion-list-refreshing", 220);
+}
+
+function animateTrackedEntry(selector) {
+  if (!selector) {
+    return;
+  }
+
+  replayMotionClass(document.querySelector(selector), "motion-item-enter", 240);
+}
+
+function animateRemoval(selector, callback) {
+  const element = document.querySelector(selector);
+  if (!element || prefersReducedMotion()) {
+    callback?.();
+    return;
+  }
+
+  element.classList.add("motion-item-exit");
+  window.setTimeout(() => {
+    callback?.();
+  }, 210);
+}
+
 function bindEvents() {
   elements.drawerToggleButton.addEventListener("click", toggleDrawer);
   elements.drawerScrim.addEventListener("click", closeDrawer);
@@ -488,11 +554,11 @@ function renderQuoteMeta() {
       ? "Press Save to update the quote name."
       : editedAt
         ? `Auto-saved locally · ${editedAt}`
-        : "Auto-saved locally";
+      : "Auto-saved locally";
   elements.saveQuoteNameButton.disabled = !draftName || !hasDirtyDraft;
   elements.quoteSheetName.textContent = getQuoteDisplayName(state.quoteName);
   elements.quoteSheetEditedAt.textContent = editedAt ? `Last edited ${editedAt}` : "";
-  elements.footerGrandTotal.textContent = formatCurrency(totals.grandTotal);
+  setAnimatedText(elements.footerGrandTotal, formatCurrency(totals.grandTotal));
   elements.itemBuilderShell.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.setAttribute("aria-disabled", String(!hasSavedName));
   elements.itemBuilderLockNote.hidden = true;
@@ -503,14 +569,14 @@ function renderQuoteMeta() {
 function renderQuoteDeliveryCard(totals = getCurrentQuoteTotals()) {
   const deliveryTotals = calculateDeliveryTotal(state.quoteDelivery);
   const deliveryBoxes = deliveryTotals.boxes;
-  elements.quoteDeliveryBoxesCount.textContent = String(deliveryBoxes);
+  setAnimatedText(elements.quoteDeliveryBoxesCount, String(deliveryBoxes));
   elements.decreaseDeliveryBoxesButton.disabled = deliveryBoxes <= 0;
-  elements.quoteDeliverySummaryService.textContent = `${
+  setAnimatedText(elements.quoteDeliverySummaryService, `${
     deliveryTotals.serviceName || state.settings.deliveryServiceName
-  } @ ${formatCurrency(deliveryTotals.pricePerBox)}`;
-  elements.quoteDeliverySummaryBoxes.textContent = `Delivery total: ${formatCurrency(
+  } @ ${formatCurrency(deliveryTotals.pricePerBox)}`);
+  setAnimatedText(elements.quoteDeliverySummaryBoxes, `Delivery total: ${formatCurrency(
     deliveryTotals.totalPrice,
-  )}`;
+  )}`);
 }
 
 function renderQuoteComposer() {
@@ -649,13 +715,14 @@ function renderDraftPrints() {
   elements.printsStage.classList.toggle("is-locked", !garmentReady);
   elements.openPrintSheetButton.disabled = !garmentReady;
 
+  refreshListMotion(elements.draftPrintList);
   elements.draftPrintList.innerHTML = state.quoteDraft.prints
     .map((printLine) => {
       const position = getPositionById(printLine.positionId);
       const size = getSizeById(printLine.sizeId);
 
       return `
-        <article class="mini-print-card">
+        <article class="mini-print-card" data-draft-print-id="${printLine.id}">
           <div>
             <strong>${escapeHtml(position?.label || "Custom position")}</strong>
             <span>${escapeHtml(size?.label || "Custom size")} · ${escapeHtml(
@@ -679,6 +746,12 @@ function renderDraftPrints() {
     .join("");
 
   elements.draftPrintsEmpty.hidden = state.quoteDraft.prints.length > 0;
+  animateTrackedEntry(
+    state.motion.recentDraftPrintId
+      ? `[data-draft-print-id="${state.motion.recentDraftPrintId}"]`
+      : "",
+  );
+  state.motion.recentDraftPrintId = "";
 }
 
 function renderDraftPreview() {
@@ -738,19 +811,25 @@ function renderDraftPreview() {
 function renderQuoteSummary() {
   const quoteItems = getQuoteItemsForDisplay();
   const totals = getCurrentQuoteTotals();
-  elements.quoteGarmentCount.textContent = formatGarmentCount(totals.quoteQuantity);
-  elements.quoteProductTypeCount.textContent = formatProductTypeCount(totals.itemCount);
-  elements.quoteItemsSubtotalSummary.textContent = formatCurrency(totals.itemsSubtotal);
-  elements.quoteDeliveryTotalSummary.textContent = formatCurrency(totals.deliveryTotal);
-  elements.quoteGrandTotal.textContent = formatCurrency(totals.grandTotal);
-  elements.footerGrandTotal.textContent = formatCurrency(totals.grandTotal);
-  elements.quoteSheetBracketMeta.textContent = `Print pricing bracket: ${formatPrintBracketLabel(
-    totals.printQuantityBracket,
-  )}`;
+  setAnimatedText(elements.quoteGarmentCount, formatGarmentCount(totals.quoteQuantity));
+  setAnimatedText(elements.quoteProductTypeCount, formatProductTypeCount(totals.itemCount));
+  setAnimatedText(elements.quoteItemsSubtotalSummary, formatCurrency(totals.itemsSubtotal));
+  setAnimatedText(elements.quoteDeliveryTotalSummary, formatCurrency(totals.deliveryTotal));
+  setAnimatedText(elements.quoteGrandTotal, formatCurrency(totals.grandTotal));
+  setAnimatedText(elements.footerGrandTotal, formatCurrency(totals.grandTotal));
+  setAnimatedText(
+    elements.quoteSheetBracketMeta,
+    `Print pricing bracket: ${formatPrintBracketLabel(totals.printQuantityBracket)}`,
+  );
   elements.openQuoteSheetButton.disabled = totals.itemCount === 0;
 
+  refreshListMotion(elements.quoteItemsList);
   elements.quoteItemsList.innerHTML = quoteItems.map((item) => renderQuoteItemCard(item)).join("");
   elements.quoteItemsEmpty.hidden = quoteItems.length > 0;
+  animateTrackedEntry(
+    state.motion.recentQuoteItemId ? `[data-quote-item-id="${state.motion.recentQuoteItemId}"]` : "",
+  );
+  state.motion.recentQuoteItemId = "";
 }
 
 function renderQuoteItemCard(item) {
@@ -758,7 +837,7 @@ function renderQuoteItemCard(item) {
   const title = `${item.quantity} × ${getGarmentTitle(item.garment)}`;
 
   return `
-    <article class="summary-card quote-item-card">
+    <article class="summary-card quote-item-card" data-quote-item-id="${item.id}">
       <div class="summary-card-head quote-item-card-head">
         <div>
           <strong>${escapeHtml(title)}</strong>
@@ -813,6 +892,7 @@ function renderQuoteItemCard(item) {
 }
 
 function renderSavedQuotes() {
+  refreshListMotion(elements.savedQuotesList);
   elements.savedQuotesList.innerHTML = state.quotes
     .map((quote) => {
       const totals = calculateQuoteTotals(
@@ -822,7 +902,10 @@ function renderSavedQuotes() {
       const isActive = quote.id === state.activeQuoteId;
 
       return `
-        <article class="summary-card saved-quote-card ${isActive ? "is-current" : ""}">
+        <article
+          class="summary-card saved-quote-card ${isActive ? "is-current" : ""}"
+          data-saved-quote-id="${quote.id}"
+        >
           <button class="saved-quote-card-main" data-open-quote="${quote.id}" type="button">
             <div class="saved-quote-head">
               <div class="saved-quote-title-block">
@@ -872,11 +955,16 @@ function renderSavedQuotes() {
     .join("");
 
   elements.savedQuotesEmpty.hidden = state.quotes.length > 0;
+  animateTrackedEntry(
+    state.motion.recentQuoteId ? `[data-saved-quote-id="${state.motion.recentQuoteId}"]` : "",
+  );
+  state.motion.recentQuoteId = "";
 }
 
 function renderGarmentSearchResults() {
   const groups = getGroupedGarments(state.quoteGarmentSearch);
 
+  refreshListMotion(elements.quoteGarmentResults);
   elements.quoteGarmentResults.innerHTML = groups
     .map(({ category, garments }) => {
       const shouldForceOpen = Boolean(state.quoteGarmentSearch.trim());
@@ -895,7 +983,10 @@ function renderGarmentSearchResults() {
               <span class="caret">›</span>
             </div>
           </button>
-          <div class="disclosure-body picker-garment-list" ${isOpen ? "" : "hidden"}>
+          <div
+            class="disclosure-body picker-garment-list"
+            aria-hidden="${isOpen ? "false" : "true"}"
+          >
             ${garments
               .map(
                 (garment) => `
@@ -929,7 +1020,7 @@ function renderGarmentCreatorState() {
 
 function renderGarmentSheetMeta() {
   const breakdown = calculateGarmentBreakdown(state.quoteDraft.garment.costPrice, state.settings);
-  elements.quoteGarmentSellPrice.textContent = formatCurrency(breakdown.sellPrice);
+  setAnimatedText(elements.quoteGarmentSellPrice, formatCurrency(breakdown.sellPrice));
   elements.quoteGarmentBreakdown.innerHTML = `
     <p>Cost: <strong>${formatCurrency(breakdown.baseCost)}</strong></p>
     <div class="breakdown-inline">
@@ -987,11 +1078,17 @@ function renderPrintSheetMeta() {
     quoteQuantity,
   );
 
-  elements.draftPrintComputedPrice.textContent = formatCurrency(computedPrice);
-  elements.draftPrintSizeMeta.textContent = size ? `${size.label} · ${formatDimensions(size)}` : "";
-  elements.draftPrintBracketMeta.textContent = `Using quote bracket ${formatPrintBracketLabel(
-    bracket,
-  )} for ${formatGarmentCount(quoteQuantity || 0)}.`;
+  setAnimatedText(elements.draftPrintComputedPrice, formatCurrency(computedPrice));
+  setAnimatedText(
+    elements.draftPrintSizeMeta,
+    size ? `${size.label} · ${formatDimensions(size)}` : "",
+  );
+  setAnimatedText(
+    elements.draftPrintBracketMeta,
+    `Using quote bracket ${formatPrintBracketLabel(bracket)} for ${formatGarmentCount(
+      quoteQuantity || 0,
+    )}.`,
+  );
   elements.draftPrintPrice.value = state.quoteDraft.printDraft.price;
 }
 
@@ -1005,6 +1102,7 @@ function renderGarmentLibrary() {
     }))
     .filter((group) => (query ? group.garments.length > 0 : true));
 
+  refreshListMotion(elements.garmentLibraryList);
   elements.garmentLibraryList.innerHTML = groups
     .map(({ category, garments: categoryGarments }) => {
       const isOpen = query ? true : Boolean(state.garmentLibraryOpenCategories[category.id]);
@@ -1302,8 +1400,11 @@ function syncGarmentEditor(garment = null) {
   elements.garmentEditorCode.value = activeGarment.code || "";
   elements.garmentEditorCost.value = activeGarment.costPrice ?? "";
   elements.garmentEditorNotes.value = activeGarment.notes || "";
-  elements.garmentEditorSellPrice.textContent = formatCurrency(
-    calculateGarmentSellPrice(activeGarment.costPrice, state.settings),
+  setAnimatedText(
+    elements.garmentEditorSellPrice,
+    formatCurrency(
+      calculateGarmentSellPrice(activeGarment.costPrice, state.settings),
+    ),
   );
 }
 
@@ -1838,8 +1939,9 @@ function handleGarmentCategoryListInput(event) {
 }
 
 function handleGarmentEditorInput() {
-  elements.garmentEditorSellPrice.textContent = formatCurrency(
-    calculateGarmentSellPrice(elements.garmentEditorCost.value, state.settings),
+  setAnimatedText(
+    elements.garmentEditorSellPrice,
+    formatCurrency(calculateGarmentSellPrice(elements.garmentEditorCost.value, state.settings)),
   );
 }
 
@@ -1979,12 +2081,14 @@ function saveCurrentPrint() {
     return;
   }
 
+  const printId = generateId();
   state.quoteDraft.prints.push({
-    id: generateId(),
+    id: printId,
     positionId: state.quoteDraft.printDraft.positionId,
     sizeId: state.quoteDraft.printDraft.sizeId,
     price: sanitiseNumber(state.quoteDraft.printDraft.price, 0),
   });
+  state.motion.recentDraftPrintId = printId;
 
   renderDraftPrints();
   renderDraftPreview();
@@ -2013,6 +2117,7 @@ function saveQuoteItemFromDraft() {
     nextQuoteItems = state.quoteItems.map((item) => (item.id === editingId ? snapshot : item));
   } else {
     nextQuoteItems = [...state.quoteItems, snapshot];
+    state.motion.recentQuoteItemId = snapshot.id;
   }
 
   state.quoteItems = nextQuoteItems.map((item) => normaliseQuoteItemRecord(item));
@@ -2107,6 +2212,7 @@ function duplicateQuoteItem(itemId) {
   };
 
   state.quoteItems.splice(itemIndex + 1, 0, duplicatedItem);
+  state.motion.recentQuoteItemId = duplicatedItem.id;
   repriceDraftPrintsForQuantity();
   refreshDraftPriceFromPricing(true);
   persistActiveQuote();
@@ -2129,13 +2235,15 @@ function requestDeleteDraftPrint(printId) {
 }
 
 function deleteDraftPrint(printId) {
-  state.quoteDraft.prints = state.quoteDraft.prints.filter((printLine) => printLine.id !== printId);
-  renderDraftPrints();
-  renderDraftPreview();
-  renderQuoteSummary();
-  persistActiveQuote();
-  renderQuoteMeta();
-  renderSavedQuotes();
+  animateRemoval(`[data-draft-print-id="${printId}"]`, () => {
+    state.quoteDraft.prints = state.quoteDraft.prints.filter((printLine) => printLine.id !== printId);
+    renderDraftPrints();
+    renderDraftPreview();
+    renderQuoteSummary();
+    persistActiveQuote();
+    renderQuoteMeta();
+    renderSavedQuotes();
+  });
 }
 
 function requestDeleteQuoteItem(itemId) {
@@ -2151,20 +2259,22 @@ function requestDeleteQuoteItem(itemId) {
 }
 
 function deleteQuoteItem(itemId) {
-  state.quoteItems = state.quoteItems.filter((item) => item.id !== itemId);
+  animateRemoval(`[data-quote-item-id="${itemId}"]`, () => {
+    state.quoteItems = state.quoteItems.filter((item) => item.id !== itemId);
 
-  if (state.quoteDraft.editingItemId === itemId) {
-    state.quoteDraft.editingItemId = "";
-  }
+    if (state.quoteDraft.editingItemId === itemId) {
+      state.quoteDraft.editingItemId = "";
+    }
 
-  repriceDraftPrintsForQuantity();
-  refreshDraftPriceFromPricing(true);
-  persistActiveQuote();
-  renderQuoteComposer();
-  renderQuoteSummary();
-  renderDraftPreview();
-  renderQuoteMeta();
-  renderSavedQuotes();
+    repriceDraftPrintsForQuantity();
+    refreshDraftPriceFromPricing(true);
+    persistActiveQuote();
+    renderQuoteComposer();
+    renderQuoteSummary();
+    renderDraftPreview();
+    renderQuoteMeta();
+    renderSavedQuotes();
+  });
 }
 
 function createNewQuote() {
@@ -2176,6 +2286,7 @@ function createNewQuote() {
 
   const quote = createBlankQuoteRecord();
   state.quotes.unshift(quote);
+  state.motion.recentQuoteId = quote.id;
   loadQuoteIntoState(quote);
   persistActiveQuote();
   renderApp();
@@ -2209,6 +2320,7 @@ function duplicateQuote(quoteId) {
   };
 
   state.quotes.unshift(duplicate);
+  state.motion.recentQuoteId = duplicate.id;
   loadQuoteIntoState(duplicate);
   persistActiveQuote();
   renderApp();
@@ -2221,19 +2333,22 @@ function deleteQuote(quoteId) {
     return;
   }
 
-  state.quotes = state.quotes.filter((item) => item.id !== quoteId);
+  animateRemoval(`[data-saved-quote-id="${quoteId}"]`, () => {
+    state.quotes = state.quotes.filter((item) => item.id !== quoteId);
 
-  if (!state.quotes.length) {
-    const blankQuote = createBlankQuoteRecord();
-    state.quotes = [blankQuote];
-    loadQuoteIntoState(blankQuote);
-  } else if (quoteId === state.activeQuoteId) {
-    loadQuoteIntoState(state.quotes[0]);
-  }
+    if (!state.quotes.length) {
+      const blankQuote = createBlankQuoteRecord();
+      state.quotes = [blankQuote];
+      state.motion.recentQuoteId = blankQuote.id;
+      loadQuoteIntoState(blankQuote);
+    } else if (quoteId === state.activeQuoteId) {
+      loadQuoteIntoState(state.quotes[0]);
+    }
 
-  persist(STORAGE_KEYS.quotes, state.quotes);
-  persistUiState();
-  renderApp();
+    persist(STORAGE_KEYS.quotes, state.quotes);
+    persistUiState();
+    renderApp();
+  });
 }
 
 function requestDeleteGarmentFromEditor() {
