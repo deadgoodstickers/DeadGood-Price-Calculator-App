@@ -37,10 +37,11 @@
   --motion-fade-distance: 8px;
   --motion-sheet-distance: 18px;
   --motion-overlay-opacity: 0.54;
-  --desktop-sidebar-width: 288px;
+  --desktop-sidebar-width: 304px;
   --desktop-sidebar-gap: 1rem;
   --desktop-sidebar-space: calc(var(--desktop-sidebar-width) + (var(--desktop-sidebar-gap) * 2));
-  --desktop-sidebar-bottom-clearance: 5.75rem;
+  --desktop-sidebar-bottom-clearance: 5.5rem;
+  --desktop-content-width: 1040px;
 }
 
 * {
@@ -2701,12 +2702,16 @@ select:focus {
   }
 
   .app-shell > .page-stack {
-    width: min(calc(100% - 1rem), var(--content-width));
+    width: min(calc(100% - 1rem), var(--desktop-content-width));
     margin: 0 auto;
   }
 
+  .composer-card {
+    width: min(100%, var(--desktop-content-width));
+  }
+
   .appbar {
-    width: min(100%, calc(var(--content-width) + 1.5rem));
+    width: min(100%, calc(var(--desktop-content-width) + 1.5rem));
     margin-left: auto;
     margin-right: auto;
     padding-left: 0.75rem;
@@ -2715,10 +2720,10 @@ select:focus {
 
   .quote-bar {
     left: calc(
-      var(--desktop-sidebar-space) + max(0.75rem, (100vw - var(--desktop-sidebar-space) - var(--content-width)) / 2)
+      var(--desktop-sidebar-space) + max(0.75rem, (100vw - var(--desktop-sidebar-space) - var(--desktop-content-width)) / 2)
     );
     right: auto;
-    width: min(calc(100vw - var(--desktop-sidebar-space) - 1.5rem), var(--content-width));
+    width: min(calc(100vw - var(--desktop-sidebar-space) - 1.5rem), var(--desktop-content-width));
   }
 }
 
