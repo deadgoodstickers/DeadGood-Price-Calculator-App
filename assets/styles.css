@@ -2439,6 +2439,10 @@ select:focus {
   --builder-lock-duration: 250ms;
 }
 
+.builder-card.is-locked {
+  background: rgba(12, 12, 15, 0.98);
+}
+
 .builder-card::after {
   content: "";
   position: absolute;
@@ -2454,13 +2458,13 @@ select:focus {
 }
 
 .builder-card.is-locked::after {
-  background: rgba(8, 8, 10, 0.43);
+  background: rgba(8, 8, 10, 0.58);
   opacity: 1;
 }
 
 .builder-card.is-locked .builder-shell {
-  opacity: 0.68;
-  filter: saturate(0.72);
+  opacity: 1;
+  filter: none;
 }
 
 .is-locked {
