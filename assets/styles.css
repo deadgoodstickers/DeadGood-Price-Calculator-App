@@ -2990,7 +2990,8 @@ select:focus {
 
   .drawer-retoggle-button,
   .overlay-scrim,
-  #drawerToggleButton {
+  #drawerToggleButton,
+  .app-logo {
     display: none;
   }
 
