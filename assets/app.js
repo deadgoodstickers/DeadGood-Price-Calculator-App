@@ -650,7 +650,8 @@ function renderCurrentGarmentCard() {
 
   if (!garmentReady) {
     elements.currentGarmentCard.innerHTML = `
-      <button class="empty-launch-card" data-action="open-garment-sheet" type="button">
+      <button class="empty-launch-card launch-card-cta" data-action="open-garment-sheet" type="button">
+        <span class="accent-icon" aria-hidden="true">+</span>
         Tap to choose or add a garment
       </button>
     `;
@@ -712,24 +713,33 @@ function renderCurrentGarmentCard() {
 
       <details class="breakdown" ${breakdownWasOpen ? "open" : ""}>
         <summary>Internal breakdown</summary>
-        <div class="breakdown-inline breakdown-inline--single-row">
-          <p>VAT <strong id="breakdownVatAmount">${formatCurrency(breakdown.vatAmount)}</strong></p>
-          <p class="markup-override-field">
-            Markup
-            <input
-              id="markupOverrideInput"
-              data-markup-override-input
-              type="number"
-              inputmode="decimal"
-              min="0"
-              max="100"
-              step="1"
-              class="markup-override-input"
-              value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
-            />%
-            <strong id="breakdownMarkupAmount">${formatCurrency(breakdown.markupAmount)}</strong>
-          </p>
-          <p>Profit <strong id="breakdownProfitAmount">${formatCurrency(profitAmount)}</strong></p>
+        <div class="breakdown-stack">
+          <div class="summary-line">
+            <span>VAT</span>
+            <strong id="breakdownVatAmount">${formatCurrency(breakdown.vatAmount)}</strong>
+          </div>
+          <div class="summary-line">
+            <span>Markup</span>
+            <span class="markup-override-field">
+              <input
+                id="markupOverrideInput"
+                data-markup-override-input
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="100"
+                step="1"
+                class="markup-override-input"
+                value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
+              />%
+              <span class="breakdown-arrow" aria-hidden="true">&rarr;</span>
+              <strong id="breakdownMarkupAmount">${formatCurrency(breakdown.markupAmount)}</strong>
+            </span>
+          </div>
+          <div class="summary-line">
+            <span>Profit</span>
+            <strong id="breakdownProfitAmount">${formatCurrency(profitAmount)}</strong>
+          </div>
         </div>
       </details>
     </article>

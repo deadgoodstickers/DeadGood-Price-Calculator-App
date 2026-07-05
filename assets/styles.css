@@ -1485,9 +1485,14 @@ select:focus {
 .breakdown summary {
   cursor: pointer;
   color: var(--muted-strong);
+  list-style: none;
   transition:
     color var(--motion-duration-fast) var(--motion-ease),
     opacity var(--motion-duration-fast) var(--motion-ease);
+}
+
+.breakdown summary::-webkit-details-marker {
+  display: none;
 }
 
 .breakdown > :not(summary) {
@@ -1522,13 +1527,14 @@ select:focus {
   margin-top: 0.45rem;
 }
 
-.breakdown-inline--single-row {
-  flex-wrap: nowrap;
-  gap: 0.5rem;
+.breakdown-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.breakdown-inline--single-row p {
-  white-space: nowrap;
+.breakdown-arrow {
+  color: var(--muted);
 }
 
 .markup-override-field {
@@ -2724,6 +2730,20 @@ select:focus {
   min-height: 80px;
   text-align: center;
   cursor: pointer;
+}
+
+.launch-card-cta {
+  border-color: var(--border-strong);
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.launch-card-cta:hover {
+  border-color: rgba(255, 191, 60, 0.45);
+}
+
+.garment-summary-card .breakdown {
+  margin-top: 0.78rem;
 }
 
 #activeQuoteMeta:empty {
