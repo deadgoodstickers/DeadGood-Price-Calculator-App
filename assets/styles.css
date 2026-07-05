@@ -37,11 +37,15 @@
   --motion-fade-distance: 8px;
   --motion-sheet-distance: 18px;
   --motion-overlay-opacity: 0.54;
-  --desktop-sidebar-width: 304px;
+  --desktop-sidebar-width: 324px;
   --desktop-sidebar-gap: 1rem;
-  --desktop-sidebar-space: calc(var(--desktop-sidebar-width) + (var(--desktop-sidebar-gap) * 2));
-  --desktop-sidebar-bottom-clearance: 5.5rem;
-  --desktop-content-width: 1040px;
+  --desktop-workspace-gap: 1.75rem;
+  --desktop-workspace-offset: calc(
+    var(--desktop-sidebar-gap) + var(--desktop-sidebar-width) + var(--desktop-workspace-gap)
+  );
+  --desktop-sidebar-space: calc(var(--desktop-workspace-offset) + var(--desktop-sidebar-gap));
+  --desktop-sidebar-bottom-clearance: 5.4rem;
+  --desktop-content-width: 1080px;
 }
 
 * {
@@ -2618,7 +2622,7 @@ select:focus {
     bottom: 0;
     left: 0;
     width: auto;
-    padding: 0.95rem 0.9rem 0.85rem;
+    padding: 1rem 0.95rem 0.9rem;
     opacity: 1;
     transform: none;
     transition: none;
@@ -2634,16 +2638,16 @@ select:focus {
   }
 
   .drawer-header {
-    min-height: 68px;
-    padding: 0.5rem 0.15rem 0.8rem;
+    min-height: 74px;
+    padding: 0.62rem 0.18rem 0.92rem;
   }
 
   .drawer-brand-logo {
-    max-height: 66px;
+    max-height: 68px;
   }
 
   .drawer-nav {
-    gap: 0.5rem;
+    gap: 0.52rem;
     overflow-y: auto;
     padding-right: 0.1rem;
   }
@@ -2655,7 +2659,7 @@ select:focus {
 
   .drawer-footer {
     gap: 0.55rem;
-    padding-top: 0.75rem;
+    padding-top: 0.8rem;
     padding-bottom: 0.15rem;
   }
 
@@ -2664,15 +2668,15 @@ select:focus {
   }
 
   .app-shell {
-    width: calc(100vw - var(--desktop-sidebar-space));
+    width: calc(100vw - var(--desktop-workspace-offset) - var(--desktop-sidebar-gap));
     max-width: none;
-    margin: 0 0 0 var(--desktop-sidebar-space);
-    padding: 0 0 6.6rem;
+    margin: 0 0 0 var(--desktop-workspace-offset);
+    padding: 0 var(--desktop-sidebar-gap) 6.6rem 0;
   }
 
   .app-shell > .page-stack {
-    width: min(calc(100% - 1rem), var(--desktop-content-width));
-    margin: 0 auto;
+    width: min(100%, var(--desktop-content-width));
+    margin: 0;
   }
 
   .composer-card {
@@ -2681,18 +2685,21 @@ select:focus {
 
   .appbar {
     width: min(100%, calc(var(--desktop-content-width) + 1.5rem));
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0;
+    margin-right: 0;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
 
   .quote-bar {
-    left: calc(
-      var(--desktop-sidebar-space) + max(0.75rem, (100vw - var(--desktop-sidebar-space) - var(--desktop-content-width)) / 2)
-    );
+    left: var(--desktop-workspace-offset);
     right: auto;
-    width: min(calc(100vw - var(--desktop-sidebar-space) - 1.5rem), var(--desktop-content-width));
+    width: min(
+      calc(
+        100vw - var(--desktop-workspace-offset) - (var(--desktop-sidebar-gap) * 2)
+      ),
+      var(--desktop-content-width)
+    );
   }
 }
 
