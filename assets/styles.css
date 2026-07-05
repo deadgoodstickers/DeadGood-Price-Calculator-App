@@ -362,6 +362,7 @@ h3 {
 }
 
 .quote-layout {
+  gap: 0.95rem;
   justify-items: center;
 }
 
@@ -423,6 +424,11 @@ h3 {
 
 .composer-card {
   width: min(100%, 760px);
+}
+
+.quote-meta-card .quote-meta-panel {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .quote-meta-panel {
