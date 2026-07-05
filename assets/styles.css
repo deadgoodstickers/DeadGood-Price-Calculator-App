@@ -1246,6 +1246,15 @@ select:focus {
   pointer-events: auto;
 }
 
+.drawer-retoggle-button {
+  position: fixed;
+  left: max(0.75rem, calc((100vw - var(--content-width)) / 2 + 0.75rem));
+  top: calc(env(safe-area-inset-top, 0px) + 0.46rem);
+  z-index: 56;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .overlay-scrim {
   position: absolute;
   inset: 0;
@@ -1281,15 +1290,26 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 0 0.9rem;
+  position: relative;
+  min-height: 76px;
+  padding: 0.75rem 0.25rem 1.05rem;
 }
 
 .drawer-brand-logo {
   display: block;
   width: auto;
   height: auto;
-  max-width: min(80vw, 296px);
-  max-height: 62px;
+  max-width: min(82vw, 360px);
+  max-height: 78px;
+}
+
+.drawer-close-button {
+  position: absolute;
+  top: 0.2rem;
+  right: 0;
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
 }
 
 .drawer-nav {
@@ -1345,6 +1365,11 @@ select:focus {
 .drawer-shell.is-open .overlay-scrim,
 .sheet-shell.is-open .overlay-scrim {
   opacity: 1;
+}
+
+.drawer-shell.is-open .drawer-retoggle-button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .drawer-shell.is-open .drawer-panel,

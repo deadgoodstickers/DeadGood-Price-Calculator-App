@@ -44,6 +44,11 @@ import {
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
 let pendingConfirmAction = null;
+const drawerSwipe = {
+  startX: 0,
+  startY: 0,
+  tracking: false,
+};
 
 const state = {
   settings: loadedState.settings,
@@ -104,8 +109,11 @@ const elements = {
   body: document.body,
   launchScreen: document.querySelector("#launchScreen"),
   drawerShell: document.querySelector("#drawerShell"),
+  drawerPanel: document.querySelector("#drawerPanel"),
   drawerToggleButton: document.querySelector("#drawerToggleButton"),
+  drawerRetoggleButton: document.querySelector("#drawerRetoggleButton"),
   drawerScrim: document.querySelector("#drawerScrim"),
+  closeDrawerButton: document.querySelector("#closeDrawerButton"),
   drawerNavButtons: [...document.querySelectorAll(".drawer-link")],
   installButton: document.querySelector("#installButton"),
   pages: [...document.querySelectorAll(".page")],
@@ -363,10 +371,13 @@ function animateRemoval(selector, callback) {
 
 function bindEvents() {
   elements.drawerToggleButton.addEventListener("click", toggleDrawer);
+  elements.drawerRetoggleButton.addEventListener("click", toggleDrawer);
   elements.drawerScrim.addEventListener("click", closeDrawer);
+  elements.closeDrawerButton.addEventListener("click", closeDrawer);
   elements.drawerNavButtons.forEach((button) => {
     button.addEventListener("click", () => setActivePage(button.dataset.page));
   });
+  bindDrawerSwipeGesture();
 
   elements.installButton.addEventListener("click", installApp);
 
@@ -499,6 +510,11 @@ function renderApp() {
 }
 
 function renderAppShell() {
+  elements.drawerToggleButton.setAttribute("aria-expanded", String(state.drawerOpen));
+  elements.drawerToggleButton.setAttribute(
+    "aria-label",
+    state.drawerOpen ? "Close navigation" : "Open navigation",
+  );
   elements.drawerNavButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.page === state.activePage);
   });
@@ -529,6 +545,23 @@ function renderAppShell() {
     state.sizeSheetOpen ||
     state.positionSizesSheetOpen;
   elements.body.classList.toggle("ui-locked", uiLocked);
+}
+
+function focusDrawerPrimaryControl() {
+  const target = elements.closeDrawerButton || elements.drawerNavButtons[0] || null;
+  if (!target) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    target.focus();
+  });
+}
+
+function restoreDrawerToggleFocus() {
+  window.requestAnimationFrame(() => {
+    elements.drawerToggleButton?.focus();
+  });
 }
 
 function renderConfirmDialog() {
@@ -1441,20 +1474,96 @@ function setActivePage(page) {
 }
 
 function toggleDrawer() {
-  state.drawerOpen = !state.drawerOpen;
-  renderAppShell();
+  if (state.drawerOpen) {
+    closeDrawer({ restoreFocus: true });
+    return;
+  }
+
+  openDrawer();
 }
 
-function closeDrawer() {
+function openDrawer() {
+  state.drawerOpen = true;
+  renderAppShell();
+  focusDrawerPrimaryControl();
+}
+
+function closeDrawer(options = {}) {
+  const { restoreFocus = false } = options;
+  const shouldRestoreFocus =
+    restoreFocus || Boolean(document.activeElement && elements.drawerShell.contains(document.activeElement));
+
   state.drawerOpen = false;
   renderAppShell();
+
+  if (shouldRestoreFocus) {
+    restoreDrawerToggleFocus();
+  }
 }
 
 function handleGlobalKeyDown(event) {
   if (event.key === "Escape" && state.confirmDialogOpen) {
     event.preventDefault();
     closeConfirmDialog();
+    return;
   }
+
+  if (event.key === "Escape" && state.drawerOpen) {
+    event.preventDefault();
+    closeDrawer({ restoreFocus: true });
+  }
+}
+
+function bindDrawerSwipeGesture() {
+  if (!elements.drawerPanel) {
+    return;
+  }
+
+  elements.drawerPanel.addEventListener("touchstart", handleDrawerTouchStart, { passive: true });
+  elements.drawerPanel.addEventListener("touchend", handleDrawerTouchEnd, { passive: true });
+  elements.drawerPanel.addEventListener("touchcancel", resetDrawerTouchTracking, { passive: true });
+}
+
+function handleDrawerTouchStart(event) {
+  if (!state.drawerOpen) {
+    return;
+  }
+
+  const touch = event.changedTouches?.[0];
+  if (!touch) {
+    return;
+  }
+
+  drawerSwipe.startX = touch.clientX;
+  drawerSwipe.startY = touch.clientY;
+  drawerSwipe.tracking = true;
+}
+
+function handleDrawerTouchEnd(event) {
+  if (!state.drawerOpen || !drawerSwipe.tracking) {
+    return;
+  }
+
+  const touch = event.changedTouches?.[0];
+  if (!touch) {
+    resetDrawerTouchTracking();
+    return;
+  }
+
+  const deltaX = touch.clientX - drawerSwipe.startX;
+  const deltaY = touch.clientY - drawerSwipe.startY;
+
+  if (deltaX <= -60 && Math.abs(deltaY) <= 48) {
+    closeDrawer();
+  }
+
+  resetDrawerTouchTracking();
+}
+
+function resetDrawerTouchTracking() {
+  drawerSwipe.tracking = false;
+  drawerSwipe.startX = 0;
+  drawerSwipe.startY = 0;
 }
 
 function openDeleteDialog({ title, message = "This action cannot be undone.", onConfirm }) {
