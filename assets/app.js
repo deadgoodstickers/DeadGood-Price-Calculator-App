@@ -874,7 +874,7 @@ function renderQuantityOptions() {
   const bracketLabel = garmentReady
     ? formatPrintBracketLabel(bracket)
     : formatPrintBracketLabel(getCurrentQuoteTotals().printQuantityBracket);
-  elements.quantityBracketMeta.innerHTML = `Print pricing bracket <strong>${escapeHtml(bracketLabel)}</strong>`;
+  elements.quantityBracketMeta.innerHTML = `Print pricing based on total items in quote &bull; <strong>${escapeHtml(bracketLabel)}</strong>`;
 }
 
 function renderDraftPrints() {
