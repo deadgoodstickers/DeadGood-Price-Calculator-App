@@ -47,6 +47,7 @@ const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
 let pendingConfirmAction = null;
 let markupCardEditing = false;
+let saveSettingsFeedbackTimeoutId = null;
 const DESKTOP_SIDEBAR_QUERY = "(min-width: 1024px)";
 const drawerSwipe = {
   startX: 0,
@@ -3126,6 +3127,23 @@ function removeSizeById(sizeId) {
   renderSavedQuotes();
 }
 
+function showSaveSettingsFeedback() {
+  const button = elements.saveSettingsButton;
+  if (!button) return;
+
+  if (saveSettingsFeedbackTimeoutId !== null) {
+    clearTimeout(saveSettingsFeedbackTimeoutId);
+  } else {
+    button.dataset.defaultLabel = button.textContent;
+  }
+
+  button.textContent = "Saved ✓";
+  saveSettingsFeedbackTimeoutId = setTimeout(() => {
+    button.textContent = button.dataset.defaultLabel;
+    saveSettingsFeedbackTimeoutId = null;
+  }, 1500);
+}
+
 function saveSettings() {
   const previousSettings = state.settings;
   state.settings = {
@@ -3162,6 +3180,7 @@ function saveSettings() {
   renderQuoteMeta();
   renderQuoteSummary();
   renderSavedQuotes();
+  showSaveSettingsFeedback();
 }
 
 function loadDemoGarments() {
