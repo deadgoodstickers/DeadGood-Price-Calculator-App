@@ -602,10 +602,10 @@ function renderQuoteMeta() {
   elements.builderCard?.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.setAttribute("aria-disabled", String(!hasSavedName));
-  elements.itemBuilderLockNote.hidden = hasSavedName;
-  elements.itemBuilderLockNote.textContent = hasSavedName
-    ? ""
-    : "Start a quote to unlock the builder.";
+  elements.itemBuilderLockNote?.setAttribute("hidden", "");
+  if (elements.itemBuilderLockNote) {
+    elements.itemBuilderLockNote.textContent = "";
+  }
   elements.resetDraftButton.disabled = !hasSavedName;
   renderQuoteDeliveryCard(totals);
 }
