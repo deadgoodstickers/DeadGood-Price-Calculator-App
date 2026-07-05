@@ -3699,6 +3699,7 @@ function syncActiveQuoteWithLibraries() {
       positionId: String(printLine.positionId || "").trim(),
       sizeId: String(printLine.sizeId || "").trim(),
       price: sanitiseNumber(printLine.price, 0),
+      priceOverride: sanitisePriceOverride(printLine.priceOverride),
     }))
     .filter((printLine) => isValidPrintReference(printLine.positionId, printLine.sizeId));
   ensureDraftSelections();
@@ -3800,6 +3801,7 @@ function createPersistedQuoteDraft() {
       positionId: printLine.positionId,
       sizeId: printLine.sizeId,
       price: sanitiseNumber(printLine.price, 0),
+      priceOverride: sanitisePriceOverride(printLine.priceOverride),
     })),
   };
 }
