@@ -335,6 +335,11 @@ h3 {
   margin-bottom: 0.55rem;
 }
 
+#savedQuotesEmpty {
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
 .helper-copy,
 .empty-copy,
 .summary-card-head span,
