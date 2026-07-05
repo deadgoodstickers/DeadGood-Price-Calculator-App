@@ -1303,15 +1303,6 @@ select:focus {
   max-height: 78px;
 }
 
-.drawer-close-button {
-  position: absolute;
-  top: 0.2rem;
-  right: 0;
-  width: 42px;
-  height: 42px;
-  font-size: 1rem;
-}
-
 .drawer-nav {
   display: grid;
   gap: 0.68rem;
@@ -1338,10 +1329,19 @@ select:focus {
   line-height: 1.45;
 }
 
-.drawer-about strong,
-.drawer-about-brand {
+.drawer-about strong {
   color: var(--muted-strong);
   font-weight: 700;
+}
+
+.drawer-about-version {
+  color: var(--muted-strong);
+}
+
+.drawer-about-site {
+  color: var(--muted);
+  font-size: 0.69rem;
+  line-height: 1.35;
 }
 
 .sheet-panel {

@@ -113,7 +113,6 @@ const elements = {
   drawerToggleButton: document.querySelector("#drawerToggleButton"),
   drawerRetoggleButton: document.querySelector("#drawerRetoggleButton"),
   drawerScrim: document.querySelector("#drawerScrim"),
-  closeDrawerButton: document.querySelector("#closeDrawerButton"),
   drawerNavButtons: [...document.querySelectorAll(".drawer-link")],
   installButton: document.querySelector("#installButton"),
   pages: [...document.querySelectorAll(".page")],
@@ -373,7 +372,6 @@ function bindEvents() {
   elements.drawerToggleButton.addEventListener("click", toggleDrawer);
   elements.drawerRetoggleButton.addEventListener("click", toggleDrawer);
   elements.drawerScrim.addEventListener("click", closeDrawer);
-  elements.closeDrawerButton.addEventListener("click", closeDrawer);
   elements.drawerNavButtons.forEach((button) => {
     button.addEventListener("click", () => setActivePage(button.dataset.page));
   });
@@ -548,7 +546,7 @@ function renderAppShell() {
 }
 
 function focusDrawerPrimaryControl() {
-  const target = elements.closeDrawerButton || elements.drawerNavButtons[0] || null;
+  const target = elements.drawerNavButtons[0] || null;
   if (!target) {
     return;
   }
