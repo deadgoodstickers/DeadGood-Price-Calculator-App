@@ -951,6 +951,12 @@ h3 {
   isolation: isolate;
 }
 
+.drawer-link.is-active:hover,
+.drawer-link.is-active:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .drawer-link,
 .chip-button,
 .size-chip,
@@ -1098,7 +1104,18 @@ select {
 
 input:focus,
 textarea:focus,
-select:focus,
+select:focus {
+  outline: 2px solid rgba(255, 190, 60, 0.55);
+  outline-offset: 2px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(255, 200, 74, 0.42);
+  background: rgba(19, 19, 23, 0.98);
+}
+
 .icon-button:focus,
 .drawer-link:focus,
 .chip-button:focus,
@@ -1111,15 +1128,23 @@ select:focus,
 .quick-card:focus,
 .empty-launch-card:focus,
 .disclosure-toggle:focus {
-  outline: 2px solid rgba(255, 190, 60, 0.55);
-  outline-offset: 2px;
+  outline: none;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  border-color: rgba(255, 200, 74, 0.42);
-  background: rgba(19, 19, 23, 0.98);
+.icon-button:focus-visible,
+.drawer-link:focus-visible,
+.chip-button:focus-visible,
+.size-chip:focus-visible,
+.manager-nav-row:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.ghost-button:focus-visible,
+.saved-quote-card-main:focus-visible,
+.quick-card:focus-visible,
+.empty-launch-card:focus-visible,
+.disclosure-toggle:focus-visible {
+  outline: 2px solid rgba(255, 190, 60, 0.55);
+  outline-offset: 2px;
 }
 
 .currency-input,
@@ -1291,8 +1316,8 @@ select:focus {
   align-items: center;
   justify-content: center;
   position: relative;
-  min-height: 76px;
-  padding: 0.75rem 0.25rem 1.05rem;
+  min-height: 82px;
+  padding: 0.88rem 0.25rem 1.18rem;
 }
 
 .drawer-brand-logo {
@@ -2446,6 +2471,11 @@ select:focus {
 }
 
 @media (min-width: 780px) {
+  #drawerToggleButton,
+  .drawer-retoggle-button {
+    left: max(0.95rem, calc((100vw - var(--content-width)) / 2 + 0.95rem));
+  }
+
   .app-shell {
     padding-top: 0;
     padding-bottom: 6.6rem;
@@ -2502,6 +2532,13 @@ select:focus {
 
   .saved-quote-head {
     align-items: flex-start;
+  }
+
+  .drawer-panel {
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: max(0.75rem, calc((100vw - var(--content-width)) / 2 + 0.2rem));
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
   }
 
   .sheet-panel,
