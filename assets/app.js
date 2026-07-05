@@ -1370,6 +1370,9 @@ function renderGarmentLibrary() {
     })
     .join("");
 
+  elements.garmentLibraryEmpty.textContent = query
+    ? "No garments match your search."
+    : "No garments saved.";
   elements.garmentLibraryEmpty.hidden = !query || groups.length > 0;
 }
 

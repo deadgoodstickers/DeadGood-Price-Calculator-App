@@ -2260,69 +2260,6 @@ select:focus {
   justify-content: space-between;
 }
 
-.admin-panel summary {
-  justify-content: space-between;
-  padding: 0.72rem 0.9rem;
-  background-image: var(--accent-gradient);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 140% 140%;
-  background-clip: padding-box;
-  -webkit-background-clip: padding-box;
-  color: #17100b;
-  font-weight: 800;
-  box-shadow: none;
-  filter: none;
-  text-shadow: none;
-  border-radius: calc(var(--radius-xl) - 1px);
-  transition:
-    border-radius var(--motion-duration-medium) var(--motion-ease),
-    background-image var(--motion-duration-medium) var(--motion-ease),
-    background-color var(--motion-duration-medium) var(--motion-ease);
-}
-
-.admin-panel .manager-detail-body {
-  padding-top: 0;
-}
-
-.admin-panel summary strong {
-  color: inherit;
-  font-size: 0.94rem;
-  line-height: 1.1;
-  flex: 1 1 auto;
-}
-
-.admin-panel summary::after {
-  content: "▼";
-  color: #17100b;
-  font-size: 0.92rem;
-  line-height: 1;
-  flex: 0 0 auto;
-  transition: transform var(--motion-duration-fast) var(--motion-ease);
-}
-
-.admin-panel summary::before {
-  content: none;
-}
-
-.admin-panel[open] > summary::after {
-  transform: rotate(180deg);
-}
-
-.admin-panel[open] > summary {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
-    var(--accent-gradient);
-}
-
-.admin-panel[open] .manager-detail-body {
-  margin-top: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 0.75rem;
-}
-
 #garmentEditorPanel.is-open {
   animation: panelReveal var(--motion-duration-medium) var(--motion-ease);
 }
