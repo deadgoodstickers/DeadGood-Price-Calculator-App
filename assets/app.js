@@ -600,7 +600,10 @@ function renderQuoteMeta() {
   setAnimatedText(elements.footerGrandTotal, formatCurrency(totals.grandTotal));
   elements.itemBuilderShell.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.setAttribute("aria-disabled", String(!hasSavedName));
-  elements.itemBuilderLockNote.hidden = true;
+  elements.itemBuilderLockNote.hidden = hasSavedName;
+  elements.itemBuilderLockNote.textContent = hasSavedName
+    ? ""
+    : "Start a quote to unlock the builder.";
   elements.resetDraftButton.disabled = !hasSavedName;
   renderQuoteDeliveryCard(totals);
 }
