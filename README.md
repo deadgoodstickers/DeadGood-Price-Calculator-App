@@ -72,4 +72,4 @@ Then open your Mac's local network IP with port `4173` from your phone browser.
 
 - All quote, garment, pricing, and settings data is browser-local only in v1.
 - Pricing values are editable placeholders and should be replaced with real production pricing.
-- Garment sell prices are stored per item, while print prices automatically reprice against the active whole-quote quantity bracket.
+- Garment sell prices are stored per item, while print prices automatically reprice against the active whole-quote quantity bracket..
