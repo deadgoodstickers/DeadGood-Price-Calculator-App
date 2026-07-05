@@ -766,7 +766,7 @@ function renderCurrentGarmentCard() {
                     class="markup-cell-input"
                     value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
                   />`
-                : `<strong id="breakdownMarkupRateDisplay">${escapeHtml(String(breakdown.markupRate ?? ""))}</strong>`
+                : `<strong id="breakdownMarkupRateDisplay">${escapeHtml(String(breakdown.markupRate ?? ""))}%</strong>`
             }
           </div>
           <div class="breakdown-cell">
@@ -891,7 +891,7 @@ function renderDraftPrints() {
       const hasOverride = printLine.priceOverride !== null && printLine.priceOverride !== undefined;
 
       return `
-        <article class="mini-print-card" data-draft-print-id="${printLine.id}">
+        <article class="mini-print-card${hasOverride ? " has-override" : ""}" data-draft-print-id="${printLine.id}">
           <div>
             <strong>${escapeHtml(position?.label || "Custom position")}</strong>
             <span>${escapeHtml(size?.label || "Custom size")} · ${escapeHtml(

@@ -699,6 +699,19 @@ h3 {
   gap: 0.6rem;
 }
 
+.mini-print-card.has-override {
+  flex-wrap: wrap;
+}
+
+.mini-print-card.has-override > div:first-child {
+  flex: 1 1 100%;
+}
+
+.mini-print-card.has-override .mini-print-meta {
+  flex: 1 1 100%;
+  justify-content: flex-end;
+}
+
 .quote-bar {
   position: fixed;
   left: 0.75rem;
@@ -711,7 +724,7 @@ h3 {
   gap: 0.65rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--border-strong);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgba(13, 13, 16, 0.94);
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow);
