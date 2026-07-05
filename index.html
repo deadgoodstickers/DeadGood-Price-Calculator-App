@@ -105,7 +105,7 @@
     <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
     <link rel="preload" as="image" href="assets/icons/deadgood-logo.png" />
-    <link rel="stylesheet" href="assets/styles.css?v=rc30" />
+    <link rel="stylesheet" href="assets/styles.css?v=rc32" />
     <title>DeadGood Printing</title>
   </head>
   <body>
@@ -929,53 +929,51 @@
 
         <section class="page" id="page-pricing" data-page="pricing" hidden>
           <div class="page-grid management-grid">
-            <article class="card stack-md page-span">
-              <div class="section-head">
-                <div>
-                  <h2>Print positions</h2>
-                </div>
-              </div>
+            <article class="card stack-sm page-span pricing-settings-card">
+              <details class="manager-details pricing-settings-panel">
+                <summary>
+                  <strong>Print Positions</strong>
+                </summary>
 
-              <div class="manager-list" id="positionList"></div>
+                <div class="manager-detail-body">
+                  <div class="manager-list" id="positionList"></div>
+                </div>
+              </details>
               <button class="primary-button full-button" id="openPositionCreateButton" type="button">
-                + Add position
+                + Add Position
               </button>
             </article>
 
-            <article class="card stack-md page-span">
-              <div class="section-head">
-                <div>
-                  <h2>Print sizes</h2>
-                </div>
-              </div>
+            <article class="card stack-sm page-span pricing-settings-card">
+              <details class="manager-details pricing-settings-panel">
+                <summary>
+                  <strong>Print Sizes</strong>
+                </summary>
 
-              <div class="manager-list" id="sizeList"></div>
+                <div class="manager-detail-body">
+                  <div class="manager-list" id="sizeList"></div>
+                </div>
+              </details>
               <button class="primary-button full-button" id="openSizeCreateButton" type="button">
-                + Add size
+                + Add Size
               </button>
             </article>
 
-            <article class="card stack-md page-span">
+            <article class="card stack-md page-span pricing-workspace-card">
               <div class="section-head">
                 <div>
-                  <h2>Pricing</h2>
+                  <h2>Print Pricing</h2>
                 </div>
               </div>
 
-              <div class="pricing-control-grid">
-                <label class="field">
-                  <span>Position</span>
-                  <select id="pricingPositionSelect"></select>
-                </label>
-                <label class="field">
-                  <span>Size</span>
-                  <select id="pricingSizeSelect"></select>
-                </label>
-              </div>
+              <label class="field">
+                <span>Position</span>
+                <select id="pricingPositionSelect"></select>
+              </label>
 
               <div class="summary-tile pricing-size-links">
                 <div class="summary-line">
-                  <span>Sizes for this position</span>
+                  <span>Available Sizes</span>
                   <button
                     class="secondary-button compact-button"
                     id="openPositionSizesSheetButton"
@@ -989,6 +987,11 @@
                   No sizes attached to this position yet.
                 </p>
               </div>
+
+              <label class="field">
+                <span>Size</span>
+                <select id="pricingSizeSelect"></select>
+              </label>
 
               <div class="summary-tile pricing-combo-tile" id="pricingComboTile">
                 <div class="summary-line">

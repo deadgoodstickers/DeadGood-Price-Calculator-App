@@ -1875,6 +1875,47 @@ select:focus {
   padding-bottom: 0.8rem;
 }
 
+.pricing-settings-card,
+.pricing-workspace-card {
+  gap: 0.75rem;
+}
+
+.pricing-settings-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.pricing-settings-panel summary {
+  padding: 0.1rem 0.08rem 0.26rem;
+  background: transparent;
+}
+
+.pricing-settings-panel summary strong {
+  flex: 1 1 auto;
+  font-size: 1rem;
+}
+
+.pricing-settings-panel summary::after {
+  content: "▼";
+  font-size: 0.92rem;
+  color: var(--muted-strong);
+  transform: rotate(0deg);
+}
+
+.pricing-settings-panel[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.pricing-settings-panel .manager-detail-body {
+  padding: 0;
+}
+
+.pricing-settings-panel[open] .manager-detail-body {
+  padding: 0.16rem 0 0.1rem;
+}
+
 .quote-totals-section {
   gap: 0.6rem;
 }
@@ -2276,7 +2317,8 @@ select:focus {
 }
 
 .selector-row.is-selected {
-  background: rgba(255, 200, 74, 0.08);
+  background: rgba(16, 16, 19, 0.96);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .selector-row-state {
@@ -2293,6 +2335,7 @@ select:focus {
   height: 28px;
   border-radius: 999px;
   background-image: var(--accent-gradient);
+  color: #17100b;
 }
 
 .pricing-control-grid {
@@ -2467,6 +2510,53 @@ select:focus {
   filter: none;
 }
 
+.builder-card.is-locked .builder-shell,
+.builder-card.is-locked .builder-shell h2,
+.builder-card.is-locked .builder-shell h3,
+.builder-card.is-locked .builder-shell strong,
+.builder-card.is-locked .builder-shell span,
+.builder-card.is-locked .builder-shell p {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.builder-card.is-locked .builder-shell .helper-copy,
+.builder-card.is-locked .builder-shell .compact-note,
+.builder-card.is-locked .builder-shell .empty-copy,
+.builder-card.is-locked .builder-shell .summary-card-head span,
+.builder-card.is-locked .builder-shell .summary-line span,
+.builder-card.is-locked .builder-shell .field span,
+.builder-card.is-locked .builder-shell .compact-field span {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.builder-card.is-locked .builder-shell .saved-quote-total strong,
+.builder-card.is-locked .builder-shell .summary-card-head strong,
+.builder-card.is-locked .builder-shell .summary-line strong,
+.builder-card.is-locked .builder-shell .item-preview-card .summary-card-head strong:last-child,
+.builder-card.is-locked .builder-shell .quote-item-card .summary-card-head strong:last-child,
+.builder-card.is-locked .builder-shell .pricing-card-summary strong {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.builder-card.is-locked .builder-shell .total-line-emphasis strong {
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.builder-card.is-locked .composer-section {
+  border-top-color: rgba(255, 255, 255, 0.03);
+}
+
+.builder-card.is-locked .step-badge,
+.builder-card.is-locked .status-pill,
+.builder-card.is-locked .category-chip {
+  background-image: none;
+  background-color: rgba(15, 15, 18, 0.98);
+  color: rgba(255, 255, 255, 0.28);
+}
+
 .builder-card.is-locked .empty-launch-card,
 .builder-card.is-locked .summary-card,
 .builder-card.is-locked .custom-quantity-panel,
@@ -2475,6 +2565,7 @@ select:focus {
 .composer-section.is-locked .custom-quantity-panel,
 .composer-section.is-locked .mini-print-card {
   background: rgba(10, 10, 12, 0.96);
+  border-color: rgba(255, 255, 255, 0.03);
 }
 
 .builder-card.is-locked input,
@@ -2488,13 +2579,27 @@ select:focus {
 .composer-section.is-locked .currency-input,
 .composer-section.is-locked .mini-currency-input {
   background: rgba(10, 10, 12, 0.96);
+  border-color: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.builder-card.is-locked select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.24) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24) 50%, transparent 50%);
+}
+
+.builder-card.is-locked .currency-input span,
+.builder-card.is-locked .mini-currency-input span {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .builder-card.is-locked button:disabled,
 .composer-section.is-locked button:disabled {
   opacity: 1;
   background: rgba(10, 10, 12, 0.96);
-  color: rgba(255, 255, 255, 0.44);
+  border-color: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.28);
 }
 
 .builder-card.is-locked .primary-button:disabled,
@@ -2519,7 +2624,7 @@ select:focus {
 .builder-card.is-locked textarea::placeholder,
 .composer-section.is-locked input::placeholder,
 .composer-section.is-locked textarea::placeholder {
-  color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.14);
 }
 
 .is-locked {
