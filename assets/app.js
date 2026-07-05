@@ -314,6 +314,29 @@ function prefersReducedMotion() {
   return Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
 }
 
+function scrollSectionIntoViewIfNeeded(element) {
+  if (!element) {
+    return;
+  }
+
+  const rect = element.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const topMargin = (document.querySelector(".appbar")?.getBoundingClientRect().height || 0) + 16;
+  const bottomMargin = (document.querySelector(".quote-bar")?.getBoundingClientRect().height || 0) + 16;
+
+  const isComfortablyVisible = rect.top >= topMargin && rect.bottom <= viewportHeight - bottomMargin;
+  if (isComfortablyVisible) {
+    return;
+  }
+
+  const targetTop = Math.max(0, window.scrollY + rect.top - topMargin - 12);
+
+  window.scrollTo({
+    top: targetTop,
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
+  });
+}
+
 function replayMotionClass(element, className, duration = 240) {
   if (!element || prefersReducedMotion()) {
     return;
@@ -821,9 +844,10 @@ function renderQuantityOptions() {
 
   elements.customQuantityPanel.hidden = !isCustom;
   elements.customQuantityInput.value = isCustom ? state.quoteDraft.customQuantity : "";
-  elements.quantityBracketMeta.textContent = garmentReady
-    ? `Print pricing bracket: ${formatPrintBracketLabel(bracket)}`
-    : `Print pricing bracket: ${formatPrintBracketLabel(getCurrentQuoteTotals().printQuantityBracket)}`;
+  const bracketLabel = garmentReady
+    ? formatPrintBracketLabel(bracket)
+    : formatPrintBracketLabel(getCurrentQuoteTotals().printQuantityBracket);
+  elements.quantityBracketMeta.innerHTML = `Print pricing bracket <strong>${escapeHtml(bracketLabel)}</strong>`;
 }
 
 function renderDraftPrints() {
@@ -1944,6 +1968,7 @@ function handleQuoteGarmentResultClick(event) {
 
   loadGarmentIntoQuoteDraft(garment);
   closeGarmentSheet();
+  scrollSectionIntoViewIfNeeded(elements.quantityStage);
 }
 
 function handleQuantityClick(event) {
@@ -1974,6 +1999,7 @@ function handleQuantityClick(event) {
   persistActiveQuote();
   renderQuoteMeta();
   renderSavedQuotes();
+  scrollSectionIntoViewIfNeeded(elements.printsStage);
 }
 
 function handleCustomQuantityInput(event) {
@@ -2248,6 +2274,7 @@ function useCurrentDraftGarment() {
   persistActiveQuote();
   renderQuoteMeta();
   renderSavedQuotes();
+  scrollSectionIntoViewIfNeeded(elements.quantityStage);
 }
 
 function saveQuoteGarmentToLibrary() {
@@ -2269,6 +2296,7 @@ function saveQuoteGarmentToLibrary() {
   persistActiveQuote();
   renderQuoteMeta();
   renderSavedQuotes();
+  scrollSectionIntoViewIfNeeded(elements.quantityStage);
 }
 
 function clearQuoteGarment() {
@@ -2306,6 +2334,7 @@ function saveCurrentPrint() {
     return;
   }
 
+  const isFirstPrint = state.quoteDraft.prints.length === 0;
   const printId = generateId();
   state.quoteDraft.prints.push({
     id: printId,
@@ -2322,6 +2351,10 @@ function saveCurrentPrint() {
   persistActiveQuote();
   renderQuoteMeta();
   renderSavedQuotes();
+
+  if (isFirstPrint) {
+    scrollSectionIntoViewIfNeeded(elements.totalsStage);
+  }
 }
 
 function saveQuoteItemFromDraft() {

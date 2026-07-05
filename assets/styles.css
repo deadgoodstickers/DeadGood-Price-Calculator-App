@@ -2694,8 +2694,25 @@ select:focus {
   cursor: pointer;
 }
 
-#quantityBracketMeta {
+.bracket-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto;
+  gap: 0.32rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted-strong);
+  font-size: 0.8rem;
   text-align: center;
+}
+
+.bracket-pill strong {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .quote-stats-tile {
