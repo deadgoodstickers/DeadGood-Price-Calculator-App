@@ -1888,24 +1888,26 @@ select:focus {
 }
 
 .pricing-settings-panel summary {
-  padding: 0.1rem 0.08rem 0.26rem;
+  padding: 0.85rem 0.9rem;
   background: transparent;
 }
 
 .pricing-settings-panel summary strong {
   flex: 1 1 auto;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .pricing-settings-panel summary::after {
-  content: "▼";
-  font-size: 0.92rem;
+  content: "›";
+  font-size: 1.25rem;
+  line-height: 1;
   color: var(--muted-strong);
   transform: rotate(0deg);
 }
 
 .pricing-settings-panel[open] > summary::after {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .pricing-settings-panel .manager-detail-body {
@@ -2301,7 +2303,7 @@ select:focus {
 }
 
 .manager-nav-row {
-  padding-inline: 0.08rem;
+  padding-inline: 0.9rem;
 }
 
 .manager-nav-row-detail strong {
