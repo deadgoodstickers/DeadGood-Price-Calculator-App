@@ -634,6 +634,7 @@ function renderCurrentGarmentCard() {
   const builderReady = canBuildQuoteItems();
   const garmentReady = hasDraftGarment();
   const pricingReady = hasDraftGarmentPricing();
+  const breakdownWasOpen = Boolean(elements.currentGarmentCard.querySelector(".breakdown")?.open);
 
   if (!builderReady) {
     elements.currentGarmentCard.innerHTML = `
@@ -702,7 +703,7 @@ function renderCurrentGarmentCard() {
         </div>
       </div>
 
-      <details class="breakdown">
+      <details class="breakdown" ${breakdownWasOpen ? "open" : ""}>
         <summary>Internal breakdown</summary>
         <div class="breakdown-inline">
           <p>VAT <strong>${formatCurrency(breakdown.vatAmount)}</strong></p>
