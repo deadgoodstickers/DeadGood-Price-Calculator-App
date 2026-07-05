@@ -371,7 +371,7 @@ h3 {
 }
 
 .quote-layout {
-  gap: 0.95rem;
+  gap: 1.55rem;
   justify-items: center;
 }
 
@@ -438,6 +438,11 @@ h3 {
 .quote-meta-card .quote-meta-panel {
   padding-bottom: 0;
   border-bottom: 0;
+}
+
+.quote-meta-card {
+  background: rgba(24, 24, 28, 0.98);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .quote-meta-panel {
@@ -2431,6 +2436,10 @@ select:focus {
   position: relative;
   isolation: isolate;
   --builder-lock-duration: 250ms;
+}
+
+.builder-card.is-locked {
+  background: rgba(17, 17, 20, 0.96);
 }
 
 .builder-card::after {
