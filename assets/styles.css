@@ -787,6 +787,12 @@ h3 {
   font-size: 1.15rem;
 }
 
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
 .square-button {
   display: inline-flex;
   align-items: center;
