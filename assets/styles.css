@@ -1052,6 +1052,13 @@ button:disabled {
   box-shadow: none;
 }
 
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 .chip-button:disabled,
 .size-chip:disabled,
 .drawer-link:disabled {
@@ -1157,6 +1164,7 @@ select:focus {
 .primary-button:focus,
 .secondary-button:focus,
 .ghost-button:focus,
+.danger-button:focus,
 .saved-quote-card-main:focus,
 .quick-card:focus,
 .empty-launch-card:focus,
@@ -1172,6 +1180,7 @@ select:focus {
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .ghost-button:focus-visible,
+.danger-button:focus-visible,
 .saved-quote-card-main:focus-visible,
 .quick-card:focus-visible,
 .empty-launch-card:focus-visible,
@@ -1536,6 +1545,9 @@ select:focus {
   cursor: pointer;
   color: var(--muted-strong);
   list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   transition:
     color var(--motion-duration-fast) var(--motion-ease),
     opacity var(--motion-duration-fast) var(--motion-ease);
@@ -1543,6 +1555,19 @@ select:focus {
 
 .breakdown summary::-webkit-details-marker {
   display: none;
+}
+
+.breakdown summary::after {
+  content: "›";
+  color: var(--muted-strong);
+  font-size: 1.25rem;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform var(--motion-duration-fast) var(--motion-ease);
+}
+
+.breakdown[open] > summary::after {
+  transform: rotate(90deg);
 }
 
 .breakdown > :not(summary) {
@@ -2309,11 +2334,6 @@ select:focus {
 
 .danger-button:active {
   transform: translate3d(0, 0, 0) scale(var(--motion-press-scale));
-}
-
-.danger-button:focus {
-  outline: 2px solid rgba(255, 190, 60, 0.55);
-  outline-offset: 2px;
 }
 
 .library-group summary {

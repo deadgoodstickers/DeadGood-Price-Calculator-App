@@ -914,7 +914,7 @@ function renderDraftPrints() {
                 : ""
             }
             <button
-              class="icon-button subtle-icon-button"
+              class="icon-button subtle-icon-button card-close-button"
               data-remove-print="${printLine.id}"
               type="button"
               aria-label="Delete print"
