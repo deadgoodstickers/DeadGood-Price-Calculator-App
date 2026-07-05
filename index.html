@@ -355,8 +355,8 @@
         </div>
 
         <label class="field compact-field">
-          <span>Override price if needed</span>
-          <div class="currency-input">
+          <span>Override price</span>
+          <div class="currency-input price-override-field">
             <span>£</span>
             <input
               id="draftPrintPrice"
@@ -364,9 +364,15 @@
               min="0"
               step="0.01"
               inputmode="decimal"
-              placeholder="0.00"
+              placeholder="Auto"
             />
+            <button type="button" id="resetPrintPriceButton" class="ghost-button compact-button price-override-reset" hidden>
+              Reset
+            </button>
           </div>
+          <p class="helper-copy compact-note" id="printPriceOverrideHelper">
+            Leave blank to use automatic pricing.
+          </p>
         </label>
 
         <button class="primary-button full-button" id="savePrintButton" type="button">

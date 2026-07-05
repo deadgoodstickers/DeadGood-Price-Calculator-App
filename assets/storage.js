@@ -19,6 +19,7 @@ import {
   generateId,
   sanitiseMarkupOverride,
   sanitiseNumber,
+  sanitisePriceOverride,
   slugify,
 } from "./utils.js?v=rc15";
 
@@ -356,6 +357,7 @@ function hydrateQuoteItemPrints(storedPrints, positions, sizes) {
         id: printLine.id || generateId(),
         positionId,
         sizeId,
+        priceOverride: sanitisePriceOverride(printLine?.priceOverride),
       };
     })
     .filter(Boolean);
@@ -380,6 +382,7 @@ function hydrateDraftPrints(storedPrints, positions, sizes) {
         positionId: position.id,
         sizeId: size.id,
         price: sanitiseNumber(printLine.price, 0),
+        priceOverride: sanitisePriceOverride(printLine?.priceOverride),
       };
     })
     .filter(Boolean);
@@ -464,6 +467,7 @@ export function hydrateQuoteDraft(storedDraft, positions, sizes, categories, gar
         sizes.find((size) => size.id === storedDraft.printDraft?.sizeId)?.id ||
         fallbackDraft.printDraft.sizeId,
       price: storedDraft.printDraft?.price ?? "",
+      priceOverride: String(storedDraft.printDraft?.priceOverride ?? ""),
     },
     prints: hydrateDraftPrints(storedDraft.prints, positions, sizes),
   };

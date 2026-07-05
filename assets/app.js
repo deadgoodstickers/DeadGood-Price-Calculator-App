@@ -39,6 +39,7 @@ import {
   generateId,
   sanitiseMarkupOverride,
   sanitiseNumber,
+  sanitisePriceOverride,
   slugify,
 } from "./utils.js?v=rc15";
 
@@ -198,6 +199,8 @@ const elements = {
   draftPrintSizeMeta: document.querySelector("#draftPrintSizeMeta"),
   draftPrintBracketMeta: document.querySelector("#draftPrintBracketMeta"),
   draftPrintPrice: document.querySelector("#draftPrintPrice"),
+  resetPrintPriceButton: document.querySelector("#resetPrintPriceButton"),
+  printPriceOverrideHelper: document.querySelector("#printPriceOverrideHelper"),
   savePrintButton: document.querySelector("#savePrintButton"),
   positionSheetShell: document.querySelector("#positionSheetShell"),
   positionSheetScrim: document.querySelector("#positionSheetScrim"),
@@ -452,12 +455,10 @@ function bindEvents() {
   elements.printSheetScrim.addEventListener("click", closePrintSheet);
   elements.printPositionOptions.addEventListener("click", handlePrintPositionClick);
   elements.printSizeOptions.addEventListener("click", handlePrintSizeClick);
-  elements.draftPrintPrice.addEventListener("input", (event) => {
-    state.quoteDraft.printDraft.price = event.target.value;
-    persistActiveQuote();
-    renderPrintSheetMeta();
-    renderQuoteMeta();
-  });
+  elements.draftPrintPrice.addEventListener("input", handleDraftPrintPriceInput);
+  elements.draftPrintPrice.addEventListener("blur", handleDraftPrintPriceBlur);
+  elements.draftPrintPrice.addEventListener("keydown", handleDraftPrintPriceKeydown);
+  elements.resetPrintPriceButton.addEventListener("click", handleResetDraftPrintPriceOverride);
   elements.savePrintButton.addEventListener("click", saveCurrentPrint);
   elements.draftPrintList.addEventListener("click", handleDraftPrintListClick);
   elements.closePositionSheetButton.addEventListener("click", closePositionSheet);
@@ -887,6 +888,8 @@ function renderDraftPrints() {
       const position = getPositionById(printLine.positionId);
       const size = getSizeById(printLine.sizeId);
 
+      const hasOverride = printLine.priceOverride !== null && printLine.priceOverride !== undefined;
+
       return `
         <article class="mini-print-card" data-draft-print-id="${printLine.id}">
           <div>
@@ -897,6 +900,19 @@ function renderDraftPrints() {
           </div>
           <div class="mini-print-meta">
             <strong>${formatCurrency(printLine.price)} each</strong>
+            ${
+              hasOverride
+                ? `
+                  <button
+                    class="ghost-button compact-button mini-print-reset-button"
+                    data-reset-print-price="${printLine.id}"
+                    type="button"
+                  >
+                    Reset
+                  </button>
+                `
+                : ""
+            }
             <button
               class="icon-button subtle-icon-button"
               data-remove-print="${printLine.id}"
@@ -1255,7 +1271,42 @@ function renderPrintSheetMeta() {
       quoteQuantity || 0,
     )}.`,
   );
-  elements.draftPrintPrice.value = state.quoteDraft.printDraft.price;
+  elements.draftPrintPrice.value = state.quoteDraft.printDraft.priceOverride || "";
+  syncPrintPriceOverrideUi();
+}
+
+function syncPrintPriceOverrideUi() {
+  const hasOverride = String(state.quoteDraft.printDraft.priceOverride ?? "").trim() !== "";
+  elements.resetPrintPriceButton.hidden = !hasOverride;
+  elements.printPriceOverrideHelper.hidden = hasOverride;
+}
+
+function handleDraftPrintPriceInput(event) {
+  state.quoteDraft.printDraft.priceOverride = event.target.value;
+  syncPrintPriceOverrideUi();
+}
+
+function handleDraftPrintPriceBlur(event) {
+  const override = sanitisePriceOverride(event.target.value);
+  state.quoteDraft.printDraft.priceOverride = override !== null ? String(override.toFixed(2)) : "";
+  event.target.value = state.quoteDraft.printDraft.priceOverride;
+  syncPrintPriceOverrideUi();
+  persistActiveQuote();
+}
+
+function handleDraftPrintPriceKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    event.target.blur();
+  }
+}
+
+function handleResetDraftPrintPriceOverride() {
+  state.quoteDraft.printDraft.priceOverride = "";
+  elements.draftPrintPrice.value = "";
+  syncPrintPriceOverrideUi();
+  persistActiveQuote();
+  elements.draftPrintPrice.focus();
 }
 
 function renderGarmentLibrary() {
@@ -1815,6 +1866,7 @@ function openPrintSheet() {
   state.printSheetOpen = true;
   ensureDraftSelections();
   refreshDraftPriceFromPricing(true);
+  state.quoteDraft.printDraft.priceOverride = "";
   renderPrintSheet();
   renderAppShell();
 }
@@ -2088,6 +2140,7 @@ function handlePrintPositionClick(event) {
     state.quoteDraft.printDraft.sizeId =
       getPricingSizesForPosition(state.quoteDraft.printDraft.positionId)[0]?.id || "";
   }
+  state.quoteDraft.printDraft.priceOverride = "";
   refreshDraftPriceFromPricing(true);
   renderPrintSheet();
   persistActiveQuote();
@@ -2102,6 +2155,7 @@ function handlePrintSizeClick(event) {
   }
 
   state.quoteDraft.printDraft.sizeId = button.dataset.printSize;
+  state.quoteDraft.printDraft.priceOverride = "";
   refreshDraftPriceFromPricing(true);
   renderPrintSheet();
   persistActiveQuote();
@@ -2110,12 +2164,39 @@ function handlePrintSizeClick(event) {
 }
 
 function handleDraftPrintListClick(event) {
+  const resetButton = event.target.closest("[data-reset-print-price]");
+  if (resetButton) {
+    resetDraftPrintPriceOverride(resetButton.dataset.resetPrintPrice);
+    return;
+  }
+
   const button = event.target.closest("[data-remove-print]");
   if (!button) {
     return;
   }
 
   requestDeleteDraftPrint(button.dataset.removePrint);
+}
+
+function resetDraftPrintPriceOverride(printId) {
+  const printLine = state.quoteDraft.prints.find((item) => item.id === printId);
+  if (!printLine) {
+    return;
+  }
+
+  printLine.priceOverride = null;
+  printLine.price = getComputedPrintPrice(
+    printLine.positionId,
+    printLine.sizeId,
+    getDraftPricingQuoteQuantity(),
+  );
+
+  renderDraftPrints();
+  renderDraftPreview();
+  renderQuoteSummary();
+  persistActiveQuote();
+  renderQuoteMeta();
+  renderSavedQuotes();
 }
 
 function handleQuoteItemListClick(event) {
@@ -2370,12 +2451,20 @@ function saveCurrentPrint() {
 
   const isFirstPrint = state.quoteDraft.prints.length === 0;
   const printId = generateId();
+  const priceOverride = sanitisePriceOverride(state.quoteDraft.printDraft.priceOverride);
+  const autoPrice = getComputedPrintPrice(
+    state.quoteDraft.printDraft.positionId,
+    state.quoteDraft.printDraft.sizeId,
+    getDraftPricingQuoteQuantity(),
+  );
   state.quoteDraft.prints.push({
     id: printId,
     positionId: state.quoteDraft.printDraft.positionId,
     sizeId: state.quoteDraft.printDraft.sizeId,
-    price: sanitiseNumber(state.quoteDraft.printDraft.price, 0),
+    priceOverride,
+    price: priceOverride !== null ? priceOverride : autoPrice,
   });
+  state.quoteDraft.printDraft.priceOverride = "";
   state.motion.recentDraftPrintId = printId;
 
   renderDraftPrints();
@@ -2466,14 +2555,26 @@ function editQuoteItem(itemId) {
       printDraft: {
         positionId: item.prints[0]?.positionId || state.positions[0]?.id || "",
         sizeId: item.prints[0]?.sizeId || state.sizes[0]?.id || "",
-        price: item.prints[0]?.price?.toFixed?.(2) || "",
+        price: "",
+        priceOverride: "",
       },
-      prints: item.prints.map((printLine) => ({
-        id: generateId(),
-        positionId: printLine.positionId,
-        sizeId: printLine.sizeId,
-        price: printLine.price,
-      })),
+      prints: item.prints.map((printLine) => {
+        const priceOverride = sanitisePriceOverride(printLine.priceOverride);
+        return {
+          id: generateId(),
+          positionId: printLine.positionId,
+          sizeId: printLine.sizeId,
+          priceOverride,
+          price:
+            priceOverride !== null
+              ? priceOverride
+              : getComputedPrintPrice(
+                  printLine.positionId,
+                  printLine.sizeId,
+                  calculateQuoteQuantity(state.quoteItems),
+                ),
+        };
+      }),
     },
     state.positions,
     state.sizes,
@@ -3301,10 +3402,18 @@ function refreshDraftPriceFromPricing(force = false) {
 
 function repriceDraftPrintsForQuantity() {
   const quantity = getDraftPricingQuoteQuantity();
-  state.quoteDraft.prints = state.quoteDraft.prints.map((printLine) => ({
-    ...printLine,
-    price: getComputedPrintPrice(printLine.positionId, printLine.sizeId, quantity),
-  }));
+  state.quoteDraft.prints = state.quoteDraft.prints.map((printLine) => {
+    const priceOverride = sanitisePriceOverride(printLine.priceOverride);
+    if (priceOverride !== null) {
+      return { ...printLine, priceOverride, price: priceOverride };
+    }
+
+    return {
+      ...printLine,
+      priceOverride: null,
+      price: getComputedPrintPrice(printLine.positionId, printLine.sizeId, quantity),
+    };
+  });
 }
 
 function getFilteredGarments(searchTerm) {
@@ -3404,6 +3513,7 @@ function normaliseQuoteItemRecord(item) {
         id: printLine.id || generateId(),
         positionId: String(printLine.positionId || "").trim(),
         sizeId: String(printLine.sizeId || "").trim(),
+        priceOverride: sanitisePriceOverride(printLine?.priceOverride),
       }))
       .filter((printLine) => isValidPrintReference(printLine.positionId, printLine.sizeId)),
     createdAt: item?.createdAt || new Date().toISOString(),

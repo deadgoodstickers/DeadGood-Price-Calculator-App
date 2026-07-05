@@ -317,6 +317,7 @@ export function createEmptyQuoteDraft(
       positionId: positionId ?? "",
       sizeId: sizeId ?? "",
       price: "",
+      priceOverride: "",
     },
     prints: [],
   };

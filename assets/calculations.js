@@ -1,5 +1,11 @@
 import { QUANTITY_OPTIONS } from "./config.js?v=rc15";
-import { formatDimensions, roundMoney, sanitiseMarkupOverride, sanitiseNumber } from "./utils.js?v=rc15";
+import {
+  formatDimensions,
+  roundMoney,
+  sanitiseMarkupOverride,
+  sanitiseNumber,
+  sanitisePriceOverride,
+} from "./utils.js?v=rc15";
 
 export function calculateGarmentBreakdown(costPrice, settings, markupOverride = null) {
   const baseCost = roundMoney(sanitiseNumber(costPrice, 0));
@@ -53,10 +59,16 @@ export function applyQuotePrintPricing(items, pricing) {
   return (items ?? []).map((item) => ({
     ...item,
     quantityBracket,
-    prints: (item?.prints ?? []).map((printLine) => ({
-      ...printLine,
-      price: lookupPrintPrice(pricing, printLine.positionId, printLine.sizeId, quoteQuantity),
-    })),
+    prints: (item?.prints ?? []).map((printLine) => {
+      const priceOverride = sanitisePriceOverride(printLine?.priceOverride);
+      return {
+        ...printLine,
+        price:
+          priceOverride !== null
+            ? priceOverride
+            : lookupPrintPrice(pricing, printLine.positionId, printLine.sizeId, quoteQuantity),
+      };
+    }),
   }));
 }
 
@@ -182,6 +194,7 @@ export function createQuoteItemRecord(draft, garmentId) {
       id: printLine.id,
       positionId: String(printLine.positionId || "").trim(),
       sizeId: String(printLine.sizeId || "").trim(),
+      priceOverride: sanitisePriceOverride(printLine.priceOverride),
     })),
     createdAt: draft.createdAt || new Date().toISOString(),
   };

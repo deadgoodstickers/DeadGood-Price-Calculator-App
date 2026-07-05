@@ -61,6 +61,18 @@ export function sanitiseMarkupOverride(value) {
   return Math.min(100, Math.max(0, parsed));
 }
 
+export function sanitisePriceOverride(value) {
+  const trimmed = String(value ?? "").trim();
+  if (trimmed === "") {
+    return null;
+  }
+  const parsed = sanitiseNumber(trimmed, Number.NaN);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return roundMoney(parsed);
+}
+
 export function generateId() {
   if (globalThis.crypto?.randomUUID) {
     return crypto.randomUUID();
