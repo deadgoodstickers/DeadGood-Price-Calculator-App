@@ -44,6 +44,7 @@ import {
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
 let pendingConfirmAction = null;
+const DESKTOP_SIDEBAR_QUERY = "(min-width: 1024px)";
 const drawerSwipe = {
   startX: 0,
   startY: 0,
@@ -376,6 +377,7 @@ function bindEvents() {
     button.addEventListener("click", () => setActivePage(button.dataset.page));
   });
   bindDrawerSwipeGesture();
+  bindViewportModeChange();
 
   elements.installButton.addEventListener("click", installApp);
 
@@ -508,6 +510,12 @@ function renderApp() {
 }
 
 function renderAppShell() {
+  const hasDesktopSidebar = isDesktopSidebarViewport();
+  if (hasDesktopSidebar && state.drawerOpen) {
+    state.drawerOpen = false;
+  }
+
+  elements.body.classList.toggle("has-desktop-sidebar", hasDesktopSidebar);
   elements.drawerToggleButton.setAttribute("aria-expanded", String(state.drawerOpen));
   elements.drawerToggleButton.setAttribute(
     "aria-label",
@@ -534,7 +542,7 @@ function renderAppShell() {
   elements.confirmDialogShell.classList.toggle("is-open", state.confirmDialogOpen);
 
   const uiLocked =
-    state.drawerOpen ||
+    (!hasDesktopSidebar && state.drawerOpen) ||
     state.confirmDialogOpen ||
     state.garmentSheetOpen ||
     state.printSheetOpen ||
@@ -1472,6 +1480,10 @@ function setActivePage(page) {
 }
 
 function toggleDrawer() {
+  if (isDesktopSidebarViewport()) {
+    return;
+  }
+
   if (state.drawerOpen) {
     closeDrawer({ restoreFocus: true });
     return;
@@ -1481,6 +1493,10 @@ function toggleDrawer() {
 }
 
 function openDrawer() {
+  if (isDesktopSidebarViewport()) {
+    return;
+  }
+
   state.drawerOpen = true;
   renderAppShell();
   focusDrawerPrimaryControl();
@@ -1510,6 +1526,31 @@ function handleGlobalKeyDown(event) {
     event.preventDefault();
     closeDrawer({ restoreFocus: true });
   }
+}
+
+function isDesktopSidebarViewport() {
+  return Boolean(globalThis.matchMedia?.(DESKTOP_SIDEBAR_QUERY)?.matches);
+}
+
+function bindViewportModeChange() {
+  const mediaQuery = globalThis.matchMedia?.(DESKTOP_SIDEBAR_QUERY);
+  if (!mediaQuery) {
+    return;
+  }
+
+  const handleViewportModeChange = () => {
+    if (mediaQuery.matches) {
+      state.drawerOpen = false;
+    }
+    renderAppShell();
+  };
+
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", handleViewportModeChange);
+    return;
+  }
+
+  mediaQuery.addListener(handleViewportModeChange);
 }
 
 function bindDrawerSwipeGesture() {

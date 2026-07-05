@@ -37,6 +37,9 @@
   --motion-fade-distance: 8px;
   --motion-sheet-distance: 18px;
   --motion-overlay-opacity: 0.54;
+  --desktop-sidebar-width: 304px;
+  --desktop-sidebar-gap: 1rem;
+  --desktop-sidebar-space: calc(var(--desktop-sidebar-width) + (var(--desktop-sidebar-gap) * 2));
 }
 
 * {
@@ -2561,6 +2564,66 @@ select:focus {
   .dialog-panel {
     left: max(0.85rem, calc(50% - 220px));
     right: max(0.85rem, calc(50% - 220px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .drawer-shell {
+    top: calc(env(safe-area-inset-top, 0px) + var(--desktop-sidebar-gap));
+    bottom: var(--desktop-sidebar-gap);
+    left: var(--desktop-sidebar-gap);
+    width: var(--desktop-sidebar-width);
+    inset-inline-end: auto;
+    pointer-events: auto;
+    z-index: 30;
+  }
+
+  .drawer-panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    padding: 1.15rem 1rem 1rem;
+    opacity: 1;
+    transform: none;
+    transition: none;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+    overflow-y: auto;
+  }
+
+  .drawer-retoggle-button,
+  .overlay-scrim,
+  #drawerToggleButton {
+    display: none;
+  }
+
+  .app-shell {
+    width: calc(100vw - var(--desktop-sidebar-space));
+    max-width: none;
+    margin: 0 0 0 var(--desktop-sidebar-space);
+    padding: 0 0 6.6rem;
+  }
+
+  .app-shell > .page-stack {
+    width: min(calc(100% - 1rem), var(--content-width));
+    margin: 0 auto;
+  }
+
+  .appbar {
+    width: min(100%, calc(var(--content-width) + 1.5rem));
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .quote-bar {
+    left: calc(
+      var(--desktop-sidebar-space) + max(0.75rem, (100vw - var(--desktop-sidebar-space) - var(--content-width)) / 2)
+    );
+    right: auto;
+    width: min(calc(100vw - var(--desktop-sidebar-space) - 1.5rem), var(--content-width));
   }
 }
 
