@@ -2458,8 +2458,8 @@ select:focus {
 }
 
 .builder-card.is-locked::after {
-  background: rgba(8, 8, 10, 0.16);
-  opacity: 1;
+  background: rgba(8, 8, 10, 0);
+  opacity: 0;
 }
 
 .builder-card.is-locked .builder-shell {
@@ -2474,7 +2474,52 @@ select:focus {
 .composer-section.is-locked .summary-card,
 .composer-section.is-locked .custom-quantity-panel,
 .composer-section.is-locked .mini-print-card {
-  background: rgba(12, 12, 15, 0.96);
+  background: rgba(10, 10, 12, 0.96);
+}
+
+.builder-card.is-locked input,
+.builder-card.is-locked textarea,
+.builder-card.is-locked select,
+.builder-card.is-locked .currency-input,
+.builder-card.is-locked .mini-currency-input,
+.composer-section.is-locked input,
+.composer-section.is-locked textarea,
+.composer-section.is-locked select,
+.composer-section.is-locked .currency-input,
+.composer-section.is-locked .mini-currency-input {
+  background: rgba(10, 10, 12, 0.96);
+}
+
+.builder-card.is-locked button:disabled,
+.composer-section.is-locked button:disabled {
+  opacity: 1;
+  background: rgba(10, 10, 12, 0.96);
+  color: rgba(255, 255, 255, 0.44);
+}
+
+.builder-card.is-locked .primary-button:disabled,
+.builder-card.is-locked .secondary-button:disabled,
+.builder-card.is-locked .ghost-button:disabled,
+.builder-card.is-locked .chip-button:disabled,
+.builder-card.is-locked .size-chip:disabled,
+.builder-card.is-locked .icon-button:disabled,
+.builder-card.is-locked .subtle-icon-button:disabled,
+.composer-section.is-locked .primary-button:disabled,
+.composer-section.is-locked .secondary-button:disabled,
+.composer-section.is-locked .ghost-button:disabled,
+.composer-section.is-locked .chip-button:disabled,
+.composer-section.is-locked .size-chip:disabled,
+.composer-section.is-locked .icon-button:disabled,
+.composer-section.is-locked .subtle-icon-button:disabled {
+  background-image: none;
+  background-color: rgba(10, 10, 12, 0.96);
+}
+
+.builder-card.is-locked input::placeholder,
+.builder-card.is-locked textarea::placeholder,
+.composer-section.is-locked input::placeholder,
+.composer-section.is-locked textarea::placeholder {
+  color: rgba(255, 255, 255, 0.18);
 }
 
 .is-locked {
