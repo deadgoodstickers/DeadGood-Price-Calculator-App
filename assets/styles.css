@@ -1111,6 +1111,18 @@ textarea {
   resize: vertical;
 }
 
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 select {
   appearance: none;
   background-image:
@@ -1191,6 +1203,20 @@ select:focus {
   border: 0;
   background: transparent;
   padding-left: 0;
+}
+
+.currency-input input:focus,
+.mini-currency-input input:focus {
+  outline: none;
+  border-color: transparent;
+  background: transparent;
+}
+
+.currency-input:focus-within,
+.mini-currency-input:focus-within {
+  border-color: rgba(255, 200, 74, 0.42);
+  background: rgba(19, 19, 23, 0.98);
+  box-shadow: 0 0 0 2px rgba(255, 190, 60, 0.35);
 }
 
 .form-grid {
@@ -1527,29 +1553,64 @@ select:focus {
   margin-top: 0.45rem;
 }
 
-.breakdown-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
 }
 
-.breakdown-arrow {
+.breakdown-cell {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.28rem;
+  min-height: 4rem;
+  padding: 0.6rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-3);
+  text-align: center;
+}
+
+.breakdown-cell span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--muted);
 }
 
-.markup-override-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
+.breakdown-cell strong {
+  font-size: 1rem;
+  color: var(--text);
 }
 
-.markup-override-input {
-  width: 3.4rem;
+.breakdown-cell--markup {
+  cursor: pointer;
+}
+
+.breakdown-cell--markup.is-editing,
+.breakdown-cell--markup:focus-within {
+  border-color: rgba(255, 200, 74, 0.42);
+  background: rgba(19, 19, 23, 0.98);
+  box-shadow: 0 0 0 2px rgba(255, 190, 60, 0.35);
+}
+
+.markup-cell-input {
+  width: 100%;
   min-height: auto;
-  padding: 0.15rem 0.3rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
   text-align: center;
   font: inherit;
+  font-size: 1rem;
   font-weight: 700;
+  color: var(--text);
+}
+
+.markup-cell-input:focus {
+  outline: none;
 }
 
 .disclosure-toggle {

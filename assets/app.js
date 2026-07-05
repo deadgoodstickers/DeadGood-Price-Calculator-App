@@ -45,6 +45,7 @@ import {
 const loadedState = loadAppState();
 const initialQuote = getStoredActiveQuote(loadedState.quotes, loadedState.uiState.activeQuoteId);
 let pendingConfirmAction = null;
+let markupCardEditing = false;
 const DESKTOP_SIDEBAR_QUERY = "(min-width: 1024px)";
 const drawerSwipe = {
   startX: 0,
@@ -416,6 +417,7 @@ function bindEvents() {
 
   elements.currentGarmentCard.addEventListener("click", handleCurrentGarmentCardClick);
   elements.currentGarmentCard.addEventListener("input", handleMarkupOverrideInput);
+  elements.currentGarmentCard.addEventListener("keydown", handleMarkupOverrideKeydown);
   elements.currentGarmentCard.addEventListener("blur", handleMarkupOverrideBlur, true);
   elements.resetDraftButton.addEventListener("click", resetDraft);
 
@@ -512,6 +514,13 @@ function bindEvents() {
   elements.cancelConfirmDialogButton.addEventListener("click", closeConfirmDialog);
   elements.confirmDialogDeleteButton.addEventListener("click", confirmDeleteAction);
   document.addEventListener("keydown", handleGlobalKeyDown);
+  document.addEventListener("focusin", handleNumericInputFocus);
+}
+
+function handleNumericInputFocus(event) {
+  if (event.target?.matches?.('input[type="number"]')) {
+    event.target.select();
+  }
 }
 
 function renderApp() {
@@ -735,31 +744,35 @@ function renderCurrentGarmentCard() {
       </div>
 
       <details class="breakdown" ${breakdownWasOpen ? "open" : ""}>
-        <summary>Internal breakdown</summary>
-        <div class="breakdown-stack">
-          <div class="summary-line">
+        <summary>Pricing breakdown</summary>
+        <div class="breakdown-grid">
+          <div class="breakdown-cell">
             <span>VAT</span>
             <strong id="breakdownVatAmount">${formatCurrency(breakdown.vatAmount)}</strong>
           </div>
-          <div class="summary-line">
-            <span>Markup</span>
-            <span class="markup-override-field">
-              <input
-                id="markupOverrideInput"
-                data-markup-override-input
-                type="number"
-                inputmode="decimal"
-                min="0"
-                max="100"
-                step="1"
-                class="markup-override-input"
-                value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
-              />%
-              <span class="breakdown-arrow" aria-hidden="true">&rarr;</span>
-              <strong id="breakdownMarkupAmount">${formatCurrency(breakdown.markupAmount)}</strong>
-            </span>
+          <div class="breakdown-cell breakdown-cell--markup${markupCardEditing ? " is-editing" : ""}" data-markup-cell>
+            <span>Markup %</span>
+            ${
+              markupCardEditing
+                ? `<input
+                    id="markupOverrideInput"
+                    data-markup-override-input
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="markup-cell-input"
+                    value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
+                  />`
+                : `<strong id="breakdownMarkupRateDisplay">${escapeHtml(String(breakdown.markupRate ?? ""))}</strong>`
+            }
           </div>
-          <div class="summary-line">
+          <div class="breakdown-cell">
+            <span>Markup</span>
+            <strong id="breakdownMarkupAmount">${formatCurrency(breakdown.markupAmount)}</strong>
+          </div>
+          <div class="breakdown-cell">
             <span>Profit</span>
             <strong id="breakdownProfitAmount">${formatCurrency(profitAmount)}</strong>
           </div>
@@ -804,9 +817,22 @@ function handleMarkupOverrideBlur(event) {
     return;
   }
 
+  markupCardEditing = false;
   renderCurrentGarmentCard();
   renderQuoteMeta();
   renderSavedQuotes();
+}
+
+function handleMarkupOverrideKeydown(event) {
+  const input = event.target.closest?.("[data-markup-override-input]");
+  if (!input) {
+    return;
+  }
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    input.blur();
+  }
 }
 
 function renderQuantityOptions() {
@@ -1902,6 +1928,14 @@ function adjustDeliveryBoxes(delta) {
 
 function handleCurrentGarmentCardClick(event) {
   if (!canBuildQuoteItems()) {
+    return;
+  }
+
+  const markupCell = event.target.closest("[data-markup-cell]");
+  if (markupCell && !markupCardEditing) {
+    markupCardEditing = true;
+    renderCurrentGarmentCard();
+    elements.currentGarmentCard.querySelector("[data-markup-override-input]")?.focus();
     return;
   }
 
