@@ -440,11 +440,6 @@ h3 {
   border-bottom: 0;
 }
 
-.quote-meta-card {
-  background: rgba(24, 24, 28, 0.98);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
 .quote-meta-panel {
   gap: 0.55rem;
   padding-bottom: 0.85rem;
@@ -2025,8 +2020,8 @@ select:focus {
 }
 
 .admin-panel summary {
-  justify-content: flex-start;
-  padding: 0.82rem 0.9rem;
+  justify-content: space-between;
+  padding: 0.72rem 0.9rem;
   background-image: var(--accent-gradient);
   background-repeat: no-repeat;
   background-position: center;
@@ -2053,13 +2048,10 @@ select:focus {
   color: inherit;
   font-size: 0.94rem;
   line-height: 1.1;
+  flex: 1 1 auto;
 }
 
 .admin-panel summary::after {
-  content: none;
-}
-
-.admin-panel summary::before {
   content: "▼";
   color: #17100b;
   font-size: 0.92rem;
@@ -2068,7 +2060,11 @@ select:focus {
   transition: transform var(--motion-duration-fast) var(--motion-ease);
 }
 
-.admin-panel[open] > summary::before {
+.admin-panel summary::before {
+  content: none;
+}
+
+.admin-panel[open] > summary::after {
   transform: rotate(180deg);
 }
 
@@ -2083,6 +2079,7 @@ select:focus {
 .admin-panel[open] .manager-detail-body {
   margin-top: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.75rem;
 }
 
 #garmentEditorPanel.is-open {
@@ -2371,11 +2368,15 @@ select:focus {
 }
 
 .category-entry-row {
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 0.65rem;
 }
 
 .category-entry-row .secondary-button {
   min-width: 82px;
+  min-height: var(--tap);
+  align-self: stretch;
 }
 
 .category-manager-row {
@@ -2438,10 +2439,6 @@ select:focus {
   --builder-lock-duration: 250ms;
 }
 
-.builder-card.is-locked {
-  background: rgba(17, 17, 20, 0.96);
-}
-
 .builder-card::after {
   content: "";
   position: absolute;
@@ -2457,13 +2454,13 @@ select:focus {
 }
 
 .builder-card.is-locked::after {
-  background: rgba(8, 8, 10, 0.36);
+  background: rgba(8, 8, 10, 0.43);
   opacity: 1;
 }
 
 .builder-card.is-locked .builder-shell {
-  opacity: 0.72;
-  filter: saturate(0.78);
+  opacity: 0.68;
+  filter: saturate(0.72);
 }
 
 .is-locked {
