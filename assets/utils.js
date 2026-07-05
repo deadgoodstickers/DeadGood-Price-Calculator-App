@@ -49,6 +49,18 @@ export function roundMoney(value) {
   return Math.round((sanitiseNumber(value, 0) + Number.EPSILON) * 100) / 100;
 }
 
+export function sanitiseMarkupOverride(value) {
+  const trimmed = String(value ?? "").trim();
+  if (trimmed === "") {
+    return null;
+  }
+  const parsed = sanitiseNumber(trimmed, Number.NaN);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  return Math.min(100, Math.max(0, parsed));
+}
+
 export function generateId() {
   if (globalThis.crypto?.randomUUID) {
     return crypto.randomUUID();

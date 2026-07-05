@@ -37,6 +37,7 @@ import {
   formatEditedDateTime,
   formatDimensions,
   generateId,
+  sanitiseMarkupOverride,
   sanitiseNumber,
   slugify,
 } from "./utils.js?v=rc15";
@@ -391,6 +392,8 @@ function bindEvents() {
   elements.increaseDeliveryBoxesButton.addEventListener("click", () => adjustDeliveryBoxes(1));
 
   elements.currentGarmentCard.addEventListener("click", handleCurrentGarmentCardClick);
+  elements.currentGarmentCard.addEventListener("input", handleMarkupOverrideInput);
+  elements.currentGarmentCard.addEventListener("blur", handleMarkupOverrideBlur, true);
   elements.resetDraftButton.addEventListener("click", resetDraft);
 
   elements.quoteGarmentSearch.addEventListener("input", (event) => {
@@ -656,7 +659,11 @@ function renderCurrentGarmentCard() {
 
   const title = getGarmentTitle(state.quoteDraft.garment);
   const subtitle = getGarmentSubtitle(state.quoteDraft.garment);
-  const breakdown = calculateGarmentBreakdown(state.quoteDraft.garment.costPrice, state.settings);
+  const breakdown = calculateGarmentBreakdown(
+    state.quoteDraft.garment.costPrice,
+    state.settings,
+    sanitiseMarkupOverride(state.quoteDraft.markupOverride),
+  );
   const isSaved = Boolean(state.quoteDraft.garment.sourceId);
   const profitAmount = breakdown.markupAmount * getDraftQuantity();
 
@@ -705,14 +712,68 @@ function renderCurrentGarmentCard() {
 
       <details class="breakdown" ${breakdownWasOpen ? "open" : ""}>
         <summary>Internal breakdown</summary>
-        <div class="breakdown-inline">
-          <p>VAT <strong>${formatCurrency(breakdown.vatAmount)}</strong></p>
-          <p>Markup <strong>${formatCurrency(breakdown.markupAmount)}</strong></p>
-          <p>Profit <strong>${formatCurrency(profitAmount)}</strong></p>
+        <div class="breakdown-inline breakdown-inline--single-row">
+          <p>VAT <strong id="breakdownVatAmount">${formatCurrency(breakdown.vatAmount)}</strong></p>
+          <p class="markup-override-field">
+            Markup
+            <input
+              id="markupOverrideInput"
+              data-markup-override-input
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="100"
+              step="1"
+              class="markup-override-input"
+              value="${escapeHtml(String(breakdown.markupRate ?? ""))}"
+            />%
+            <strong id="breakdownMarkupAmount">${formatCurrency(breakdown.markupAmount)}</strong>
+          </p>
+          <p>Profit <strong id="breakdownProfitAmount">${formatCurrency(profitAmount)}</strong></p>
         </div>
       </details>
     </article>
   `;
+}
+
+function handleMarkupOverrideInput(event) {
+  const input = event.target.closest?.("[data-markup-override-input]");
+  if (!input) {
+    return;
+  }
+
+  state.quoteDraft.markupOverride = sanitiseMarkupOverride(input.value);
+
+  const breakdown = calculateGarmentBreakdown(
+    state.quoteDraft.garment.costPrice,
+    state.settings,
+    state.quoteDraft.markupOverride,
+  );
+  const profitAmount = breakdown.markupAmount * getDraftQuantity();
+
+  const markupAmountEl = elements.currentGarmentCard.querySelector("#breakdownMarkupAmount");
+  const profitAmountEl = elements.currentGarmentCard.querySelector("#breakdownProfitAmount");
+  if (markupAmountEl) {
+    markupAmountEl.textContent = formatCurrency(breakdown.markupAmount);
+  }
+  if (profitAmountEl) {
+    profitAmountEl.textContent = formatCurrency(profitAmount);
+  }
+
+  renderDraftPreview();
+  renderQuoteSummary();
+  persistActiveQuote();
+}
+
+function handleMarkupOverrideBlur(event) {
+  const input = event.target.closest?.("[data-markup-override-input]");
+  if (!input) {
+    return;
+  }
+
+  renderCurrentGarmentCard();
+  renderQuoteMeta();
+  renderSavedQuotes();
 }
 
 function renderQuantityOptions() {
@@ -2315,6 +2376,7 @@ function editQuoteItem(itemId) {
       quantity: item.quantity,
       customQuantity: item.customQuantity,
       editingItemId: item.id,
+      markupOverride: item.markupOverride,
       garment: {
         sourceId: garment?.id || "",
         categoryId: garment?.categoryId || getDefaultCategoryId(),
@@ -3259,6 +3321,7 @@ function normaliseQuoteItemRecord(item) {
     quantity,
     customQuantity: quantityMode === "custom" ? String(item?.customQuantity || quantity) : "",
     garmentId: String(item?.garmentId || "").trim(),
+    markupOverride: sanitiseMarkupOverride(item?.markupOverride),
     prints: (item?.prints ?? [])
       .map((printLine) => ({
         id: printLine.id || generateId(),
@@ -3271,7 +3334,7 @@ function normaliseQuoteItemRecord(item) {
 }
 
 function resolveQuoteItemGarment(item) {
-  return (
+  const garment =
     getGarmentById(item?.garmentId) || {
       id: String(item?.garmentId || "").trim(),
       categoryId: getDefaultCategoryId(),
@@ -3281,8 +3344,17 @@ function resolveQuoteItemGarment(item) {
       notes: "Garment removed from library",
       costPrice: 0,
       sellPrice: 0,
-    }
-  );
+    };
+
+  const markupOverride = sanitiseMarkupOverride(item?.markupOverride);
+  if (markupOverride === null) {
+    return garment;
+  }
+
+  return {
+    ...garment,
+    sellPrice: calculateGarmentSellPrice(garment.costPrice, state.settings, markupOverride),
+  };
 }
 
 function resolveQuoteItemForDisplay(item) {

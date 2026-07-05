@@ -303,6 +303,7 @@ export function createEmptyQuoteDraft(
     quantity: 25,
     customQuantity: "",
     editingItemId: "",
+    markupOverride: null,
     garment: {
       sourceId: "",
       categoryId: defaultCategoryId,

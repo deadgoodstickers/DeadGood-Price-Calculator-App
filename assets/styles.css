@@ -1516,6 +1516,30 @@ select:focus {
   margin-top: 0.45rem;
 }
 
+.breakdown-inline--single-row {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+.breakdown-inline--single-row p {
+  white-space: nowrap;
+}
+
+.markup-override-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.markup-override-input {
+  width: 3.4rem;
+  min-height: auto;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+  font: inherit;
+  font-weight: 700;
+}
+
 .disclosure-toggle {
   display: flex;
   align-items: center;

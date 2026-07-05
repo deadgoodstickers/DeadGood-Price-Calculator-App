@@ -17,6 +17,7 @@ import { calculateGarmentSellPrice } from "./calculations.js?v=rc15";
 import {
   deepClone,
   generateId,
+  sanitiseMarkupOverride,
   sanitiseNumber,
   slugify,
 } from "./utils.js?v=rc15";
@@ -403,6 +404,7 @@ export function hydrateQuoteItems(storedQuoteItems, positions, sizes, garments) 
       customQuantity:
         quantityMode === "custom" ? String(item?.customQuantity || quantity) : "",
       garmentId: resolveStoredQuoteGarmentId(item, garments),
+      markupOverride: sanitiseMarkupOverride(item?.markupOverride),
       prints: hydrateQuoteItemPrints(item?.prints, positions, sizes),
       createdAt: item?.createdAt || new Date().toISOString(),
     };
@@ -439,6 +441,7 @@ export function hydrateQuoteDraft(storedDraft, positions, sizes, categories, gar
     customQuantity:
       quantityMode === "custom" ? String(storedDraft.customQuantity || quantity) : "",
     editingItemId: String(storedDraft.editingItemId || ""),
+    markupOverride: sanitiseMarkupOverride(storedDraft.markupOverride),
     garment: {
       sourceId: linkedGarment ? linkedGarment.id : "",
       categoryId: resolveCategoryId(

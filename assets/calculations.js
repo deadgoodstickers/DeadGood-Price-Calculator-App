@@ -1,13 +1,15 @@
 import { QUANTITY_OPTIONS } from "./config.js?v=rc15";
-import { formatDimensions, roundMoney, sanitiseNumber } from "./utils.js?v=rc15";
+import { formatDimensions, roundMoney, sanitiseMarkupOverride, sanitiseNumber } from "./utils.js?v=rc15";
 
-export function calculateGarmentBreakdown(costPrice, settings) {
+export function calculateGarmentBreakdown(costPrice, settings, markupOverride = null) {
   const baseCost = roundMoney(sanitiseNumber(costPrice, 0));
   const vatAmount = roundMoney((baseCost * sanitiseNumber(settings?.vatRate, 0)) / 100);
   const vatInclusiveCost = roundMoney(baseCost + vatAmount);
-  const markupAmount = roundMoney(
-    (vatInclusiveCost * sanitiseNumber(settings?.markupRate, 0)) / 100,
-  );
+  const markupRate =
+    markupOverride !== null && markupOverride !== undefined
+      ? markupOverride
+      : sanitiseNumber(settings?.markupRate, 0);
+  const markupAmount = roundMoney((vatInclusiveCost * sanitiseNumber(markupRate, 0)) / 100);
   const sellPrice = roundMoney(vatInclusiveCost + markupAmount);
 
   return {
@@ -15,11 +17,12 @@ export function calculateGarmentBreakdown(costPrice, settings) {
     vatAmount,
     markupAmount,
     sellPrice,
+    markupRate,
   };
 }
 
-export function calculateGarmentSellPrice(costPrice, settings) {
-  return calculateGarmentBreakdown(costPrice, settings).sellPrice;
+export function calculateGarmentSellPrice(costPrice, settings, markupOverride = null) {
+  return calculateGarmentBreakdown(costPrice, settings, markupOverride).sellPrice;
 }
 
 export function resolveQuantityBracket(quantity) {
@@ -131,7 +134,11 @@ export function createQuoteItemSnapshot(draft, references, settings) {
     code: draft.garment.code.trim(),
     notes: draft.garment.notes.trim(),
     costPrice: roundMoney(draft.garment.costPrice),
-    sellPrice: calculateGarmentSellPrice(draft.garment.costPrice, settings),
+    sellPrice: calculateGarmentSellPrice(
+      draft.garment.costPrice,
+      settings,
+      sanitiseMarkupOverride(draft.markupOverride),
+    ),
   };
 
   const prints = draft.prints.map((printLine) => {
@@ -170,6 +177,7 @@ export function createQuoteItemRecord(draft, garmentId) {
     quantity,
     customQuantity: draft.quantityMode === "custom" ? String(draft.customQuantity || quantity) : "",
     garmentId: String(garmentId || "").trim(),
+    markupOverride: sanitiseMarkupOverride(draft.markupOverride),
     prints: (draft.prints ?? []).map((printLine) => ({
       id: printLine.id,
       positionId: String(printLine.positionId || "").trim(),
