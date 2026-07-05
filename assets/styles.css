@@ -2522,6 +2522,7 @@ select:focus {
 .builder-card.is-locked .builder-shell .helper-copy,
 .builder-card.is-locked .builder-shell .compact-note,
 .builder-card.is-locked .builder-shell .empty-copy,
+.builder-card.is-locked .builder-shell .locked-launch-card,
 .builder-card.is-locked .builder-shell .summary-card-head span,
 .builder-card.is-locked .builder-shell .summary-line span,
 .builder-card.is-locked .builder-shell .field span,
@@ -2535,14 +2536,17 @@ select:focus {
 .builder-card.is-locked .builder-shell .item-preview-card .summary-card-head strong:last-child,
 .builder-card.is-locked .builder-shell .quote-item-card .summary-card-head strong:last-child,
 .builder-card.is-locked .builder-shell .pricing-card-summary strong {
-  color: rgba(255, 255, 255, 0.42);
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .builder-card.is-locked .builder-shell .total-line-emphasis strong {
   background-image: none;
   -webkit-background-clip: border-box;
   background-clip: border-box;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .builder-card.is-locked .composer-section {
