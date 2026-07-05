@@ -2440,7 +2440,7 @@ select:focus {
 }
 
 .builder-card.is-locked {
-  background: rgba(12, 12, 15, 0.98);
+  background: rgba(11, 11, 13, 0.98);
 }
 
 .builder-card::after {
@@ -2458,13 +2458,23 @@ select:focus {
 }
 
 .builder-card.is-locked::after {
-  background: rgba(8, 8, 10, 0.58);
+  background: rgba(8, 8, 10, 0.16);
   opacity: 1;
 }
 
 .builder-card.is-locked .builder-shell {
   opacity: 1;
   filter: none;
+}
+
+.builder-card.is-locked .empty-launch-card,
+.builder-card.is-locked .summary-card,
+.builder-card.is-locked .custom-quantity-panel,
+.builder-card.is-locked .mini-print-card,
+.composer-section.is-locked .summary-card,
+.composer-section.is-locked .custom-quantity-panel,
+.composer-section.is-locked .mini-print-card {
+  background: rgba(12, 12, 15, 0.96);
 }
 
 .is-locked {
