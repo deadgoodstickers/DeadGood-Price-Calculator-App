@@ -2033,10 +2033,15 @@ select:focus {
   box-shadow: none;
   filter: none;
   text-shadow: none;
+  border-radius: calc(var(--radius-xl) - 1px);
+  transition:
+    border-radius var(--motion-duration-medium) var(--motion-ease),
+    background-image var(--motion-duration-medium) var(--motion-ease),
+    background-color var(--motion-duration-medium) var(--motion-ease);
 }
 
 .admin-panel .manager-detail-body {
-  padding-top: 0.1rem;
+  padding-top: 0;
 }
 
 .admin-panel summary strong {
@@ -2060,6 +2065,19 @@ select:focus {
 
 .admin-panel[open] > summary::before {
   transform: rotate(180deg);
+}
+
+.admin-panel[open] > summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
+    var(--accent-gradient);
+}
+
+.admin-panel[open] .manager-detail-body {
+  margin-top: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 #garmentEditorPanel.is-open {
