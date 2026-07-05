@@ -37,9 +37,10 @@
   --motion-fade-distance: 8px;
   --motion-sheet-distance: 18px;
   --motion-overlay-opacity: 0.54;
-  --desktop-sidebar-width: 304px;
+  --desktop-sidebar-width: 288px;
   --desktop-sidebar-gap: 1rem;
   --desktop-sidebar-space: calc(var(--desktop-sidebar-width) + (var(--desktop-sidebar-gap) * 2));
+  --desktop-sidebar-bottom-clearance: 5.75rem;
 }
 
 * {
@@ -2570,7 +2571,7 @@ select:focus {
 @media (min-width: 1024px) {
   .drawer-shell {
     top: calc(env(safe-area-inset-top, 0px) + var(--desktop-sidebar-gap));
-    bottom: var(--desktop-sidebar-gap);
+    bottom: var(--desktop-sidebar-bottom-clearance);
     left: var(--desktop-sidebar-gap);
     width: var(--desktop-sidebar-width);
     inset-inline-end: auto;
@@ -2584,18 +2585,49 @@ select:focus {
     bottom: 0;
     left: 0;
     width: auto;
-    padding: 1.15rem 1rem 1rem;
+    padding: 0.95rem 0.9rem 0.85rem;
     opacity: 1;
     transform: none;
     transition: none;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
-    overflow-y: auto;
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
 
   .drawer-retoggle-button,
   .overlay-scrim,
   #drawerToggleButton {
     display: none;
+  }
+
+  .drawer-header {
+    min-height: 68px;
+    padding: 0.5rem 0.15rem 0.8rem;
+  }
+
+  .drawer-brand-logo {
+    max-height: 66px;
+  }
+
+  .drawer-nav {
+    gap: 0.5rem;
+    overflow-y: auto;
+    padding-right: 0.1rem;
+  }
+
+  .drawer-link {
+    min-height: 48px;
+    padding: 0.66rem 0.82rem;
+  }
+
+  .drawer-footer {
+    gap: 0.55rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.15rem;
+  }
+
+  .drawer-about {
+    gap: 0.06rem;
   }
 
   .app-shell {
