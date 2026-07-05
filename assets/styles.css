@@ -2402,79 +2402,48 @@ select:focus {
   background: rgba(18, 18, 22, 0.98);
 }
 
-.is-locked {
-  opacity: 1;
-}
-
-.builder-shell > .section-head,
-.builder-shell > .composer-section,
-.builder-shell #itemBuilderLockNote {
-  transition:
-    opacity var(--motion-duration-medium) var(--motion-ease),
-    filter var(--motion-duration-medium) var(--motion-ease),
-    transform var(--motion-duration-medium) var(--motion-ease);
-}
-
-.builder-shell > .composer-section {
+.builder-card {
   position: relative;
-  overflow: hidden;
   isolation: isolate;
+  --builder-lock-duration: 250ms;
 }
 
-.builder-shell > .composer-section::after {
+.builder-card::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
+  inset: 1px;
+  border-radius: calc(var(--radius-xl) - 1px);
   background: rgba(8, 8, 10, 0);
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
   opacity: 0;
   pointer-events: none;
+  z-index: 2;
   transition:
-    opacity var(--motion-duration-medium) var(--motion-ease),
-    backdrop-filter var(--motion-duration-medium) var(--motion-ease),
-    -webkit-backdrop-filter var(--motion-duration-medium) var(--motion-ease),
-    background-color var(--motion-duration-medium) var(--motion-ease);
+    opacity var(--builder-lock-duration) var(--motion-ease),
+    backdrop-filter var(--builder-lock-duration) var(--motion-ease),
+    -webkit-backdrop-filter var(--builder-lock-duration) var(--motion-ease),
+    background-color var(--builder-lock-duration) var(--motion-ease);
 }
 
-.builder-shell.is-locked > .section-head {
-  opacity: 0.72;
-}
-
-.builder-shell.is-locked > .composer-section {
-  opacity: 0.8;
-}
-
-.builder-shell.is-locked > .composer-section > :not(.composer-row) {
-  opacity: 0.4;
-  filter: saturate(0.82);
-  transition:
-    opacity var(--motion-duration-medium) var(--motion-ease),
-    filter var(--motion-duration-medium) var(--motion-ease);
-}
-
-.builder-shell.is-locked > .composer-section::after {
-  background: rgba(8, 8, 10, 0.34);
+.builder-card.is-locked::after {
+  background: rgba(8, 8, 10, 0.42);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   opacity: 1;
 }
 
-.builder-shell.is-locked > .composer-section .composer-row,
-.builder-shell.is-locked > .composer-section .step-label,
-.builder-shell.is-locked > .composer-section .step-badge,
-.builder-shell.is-locked > .composer-section h3 {
-  position: relative;
-  z-index: 1;
+.is-locked {
   opacity: 1;
-  filter: none;
 }
 
-.builder-shell.is-locked #itemBuilderLockNote {
+.builder-shell #itemBuilderLockNote {
+  position: relative;
+  z-index: 3;
   color: var(--muted-strong);
   text-align: center;
   opacity: 0.92;
+  transition: opacity var(--builder-lock-duration) var(--motion-ease);
 }
 
 .card-action-row {

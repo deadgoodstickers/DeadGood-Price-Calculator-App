@@ -146,6 +146,7 @@ const elements = {
   quoteNameInput: document.querySelector("#quoteNameInput"),
   saveQuoteNameButton: document.querySelector("#saveQuoteNameButton"),
   activeQuoteMeta: document.querySelector("#activeQuoteMeta"),
+  builderCard: document.querySelector(".builder-card"),
   itemBuilderShell: document.querySelector("#itemBuilderShell"),
   itemBuilderLockNote: document.querySelector("#itemBuilderLockNote"),
   newQuoteButton: document.querySelector("#newQuoteButton"),
@@ -598,6 +599,7 @@ function renderQuoteMeta() {
   elements.quoteSheetName.textContent = getQuoteDisplayName(state.quoteName);
   elements.quoteSheetEditedAt.textContent = editedAt ? `Last edited ${editedAt}` : "";
   setAnimatedText(elements.footerGrandTotal, formatCurrency(totals.grandTotal));
+  elements.builderCard?.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.classList.toggle("is-locked", !hasSavedName);
   elements.itemBuilderShell.setAttribute("aria-disabled", String(!hasSavedName));
   elements.itemBuilderLockNote.hidden = hasSavedName;
