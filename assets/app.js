@@ -917,7 +917,7 @@ function renderDraftPrints() {
               class="icon-button subtle-icon-button"
               data-remove-print="${printLine.id}"
               type="button"
-              aria-label="Remove print"
+              aria-label="Delete print"
             >
               ✕
             </button>
@@ -1820,6 +1820,7 @@ function openQuoteDeleteDialog(quoteId) {
 
   openDeleteDialog({
     title: "Delete quote?",
+    message: "This will permanently delete the quote and everything in it. This cannot be undone.",
     onConfirm: () => deleteQuote(quoteId),
   });
 }
@@ -2624,6 +2625,7 @@ function requestDeleteDraftPrint(printId) {
 
   openDeleteDialog({
     title: "Delete print?",
+    message: "This will remove the print from the item you're building. You can add it again before saving.",
     onConfirm: () => deleteDraftPrint(printId),
   });
 }
@@ -2648,6 +2650,7 @@ function requestDeleteQuoteItem(itemId) {
 
   openDeleteDialog({
     title: "Delete item?",
+    message: "This will remove the item from the quote. Totals will update to reflect the change.",
     onConfirm: () => deleteQuoteItem(itemId),
   });
 }
@@ -2752,6 +2755,7 @@ function requestDeleteGarmentFromEditor() {
 
   openDeleteDialog({
     title: "Delete garment?",
+    message: "This will remove the garment from your saved garments. Quotes already using it will show it as missing.",
     onConfirm: () => deleteGarmentFromEditor(),
   });
 }
@@ -3025,6 +3029,7 @@ function requestDeletePosition(positionId) {
 
   openDeleteDialog({
     title: "Delete position?",
+    message: "This will remove the position. Any prints using it, including in saved quotes, will be removed too.",
     onConfirm: () => {
       removePositionById(positionId);
       closePositionSheet();
@@ -3077,6 +3082,7 @@ function requestDeleteSize(sizeId) {
 
   openDeleteDialog({
     title: "Delete size?",
+    message: "This will remove the size. Any prints using it, including in saved quotes, will be removed too.",
     onConfirm: () => {
       removeSizeById(sizeId);
       closeSizeSheet();

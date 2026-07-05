@@ -1350,7 +1350,12 @@ select:focus {
   border: 0;
   background: rgba(0, 0, 0, var(--motion-overlay-opacity));
   opacity: 0;
-  transition: opacity var(--motion-duration-medium) var(--motion-ease);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    opacity var(--motion-duration-medium) var(--motion-ease),
+    backdrop-filter var(--motion-duration-medium) var(--motion-ease),
+    -webkit-backdrop-filter var(--motion-duration-medium) var(--motion-ease);
 }
 
 .drawer-panel,
@@ -1454,6 +1459,8 @@ select:focus {
 .drawer-shell.is-open .overlay-scrim,
 .sheet-shell.is-open .overlay-scrim {
   opacity: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .drawer-shell.is-open .drawer-retoggle-button {
@@ -2279,11 +2286,19 @@ select:focus {
 .danger-button {
   min-height: 38px;
   padding: 0.5rem 0.8rem;
-  border: 1px solid rgba(255, 120, 120, 0.24);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: rgba(82, 19, 19, 0.34);
-  color: #ffd1d1;
+  background-image: var(--accent-gradient);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 140% 140%;
+  background-clip: padding-box;
+  -webkit-background-clip: padding-box;
+  color: #17100b;
   font-weight: 700;
+  box-shadow: none;
+  overflow: hidden;
+  isolation: isolate;
   transition:
     transform var(--motion-duration-fast) var(--motion-ease),
     border-color var(--motion-duration-fast) var(--motion-ease),
